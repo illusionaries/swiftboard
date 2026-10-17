@@ -134,11 +134,6 @@ struct HomeView: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
 
-            Text("S")
-                .font(.system(size: 180, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.055))
-                .offset(x: 18, y: 46)
-
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Text(SBDate.headerDate())
