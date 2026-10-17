@@ -1,0 +1,59 @@
+name: SwiftBoard
+options:
+  bundleIdPrefix: blog.illusion
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "15.0"
+  developmentLanguage: zh-Hans
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+packages:
+  SwiftBoardKit:
+    path: SwiftBoardKit
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  SwiftBoard:
+    type: application
+    supportedDestinations: [iOS, macOS]
+    sources:
+      - path: SwiftBoard
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/SwiftBoard.entitlements"
+    dependencies:
+      - package: SwiftBoardKit
+        product: SwiftBoardKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: blog.illusion.swiftboard
+        PRODUCT_NAME: SwiftBoard
+        INFOPLIST_FILE: SwiftBoard/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator macosx"
+        SDKROOT: auto
+        SUPPORTS_MACCATALYST: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": SwiftBoard/Resources/SwiftBoard.entitlements
+        "CODE_SIGN_IDENTITY[sdk=macosx*]": "-"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
+        SWIFT_EMIT_LOC_STRINGS: YES
+        ENABLE_PREVIEWS: YES
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+    scheme:
+      testTargets: []
+      gatherCoverageData: false

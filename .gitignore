@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+Build/
+DerivedData/
+*.xcuserdatad/
+xcuserdata/
+.bb_account
+.bb_password
+.swiftpm/
+*.xcuserstate
