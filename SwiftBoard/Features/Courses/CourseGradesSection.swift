@@ -87,54 +87,73 @@ struct CourseGradesSection: View {
     private func itemsList(_ grade: CourseGrade) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(grade.items.enumerated()), id: \.element.id) { index, item in
-                VStack(spacing: 7) {
-                    HStack(alignment: .center, spacing: 10) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(item.name)
-                                .font(.subheadline.weight(.medium))
-                                .lineLimit(2)
-                                .multilineTextAlignment(.leading)
-                            if let due = item.column.dueDate {
-                                Text("截止 \(SBDate.monthDay(due)) \(SBDate.time(due))")
-                                    .font(.caption2)
-                                    .foregroundStyle(Theme.muted)
-                            }
+                VStack(spacing: 0) {
+                    if let contentID = item.column.contentID {
+                        NavigationLink(value: AppRoute.gradeContent(courseID: course.id, contentID: contentID)) {
+                            gradeItemRow(item)
                         }
-                        Spacer(minLength: 6)
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(item.isGraded ? (item.score.map(formatScore) ?? item.text ?? "—") : "—")
-                                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundStyle(item.isGraded ? .primary : Theme.muted)
-                            Text("/ \(formatScore(item.possible))")
-                                .font(.caption2)
-                                .foregroundStyle(Theme.muted)
-                        }
-                        .frame(minWidth: 52, alignment: .trailing)
-                        statusChip(item)
+                        .buttonStyle(.plain)
+                    } else {
+                        gradeItemRow(item)
                     }
 
-                    if item.possible > 0 {
-                        GeometryReader { proxy in
-                            ZStack(alignment: .leading) {
-                                Capsule().fill(Theme.subtleFill)
-                                Capsule()
-                                    .fill(item.isGraded ? Theme.accent.opacity(0.75) : Theme.subtleFill)
-                                    .frame(width: proxy.size.width * ratio(item))
-                            }
-                        }
-                        .frame(height: 4)
+                    if index < grade.items.count - 1 {
+                        Divider().padding(.leading, 16)
                     }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 13)
-
-                if index < grade.items.count - 1 {
-                    Divider().padding(.leading, 16)
                 }
             }
         }
         .cardSurface(padding: 0, radius: 18)
+    }
+
+    private func gradeItemRow(_ item: GradeItem) -> some View {
+        VStack(spacing: 7) {
+            HStack(alignment: .center, spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.name)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    if let due = item.column.dueDate {
+                        Text("截止 \(SBDate.monthDay(due)) \(SBDate.time(due))")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+                Spacer(minLength: 6)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(item.isGraded ? (item.score.map(formatScore) ?? item.text ?? "—") : "—")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(item.isGraded ? .primary : Theme.muted)
+                    Text("/ \(formatScore(item.possible))")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.muted)
+                }
+                .frame(minWidth: 52, alignment: .trailing)
+                statusChip(item)
+                if item.column.contentID != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            if item.possible > 0 {
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Theme.subtleFill)
+                        Capsule()
+                            .fill(item.isGraded ? Theme.accent.opacity(0.75) : Theme.subtleFill)
+                            .frame(width: proxy.size.width * ratio(item))
+                    }
+                }
+                .frame(height: 4)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .contentShape(Rectangle())
     }
 
     private func statusChip(_ item: GradeItem) -> some View {

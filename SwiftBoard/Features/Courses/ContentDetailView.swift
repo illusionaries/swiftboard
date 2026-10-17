@@ -466,3 +466,57 @@ struct ContentChildrenList: View {
         }
     }
 }
+
+
+struct ContentByIDView: View {
+    let courseID: String
+    let contentID: String
+
+    @Environment(AppModel.self) private var model
+    @State private var content: CourseContent?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let content, let course = model.course(id: courseID) {
+                ContentDetailView(course: course, content: content)
+            } else if let errorMessage {
+                VStack(spacing: 14) {
+                    EmptyStateView(
+                        symbol: "exclamationmark.triangle",
+                        title: "无法加载这项内容",
+                        message: errorMessage
+                    )
+                    Button("重试") {
+                        Task { await load(force: true) }
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.accent)
+                }
+                .padding(24)
+            } else {
+                ProgressView("正在加载…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(Theme.canvas)
+        .navigationTitle(content?.title ?? "作业")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        .task { await load() }
+    }
+
+    private func load(force: Bool = false) async {
+        if !force, content != nil { return }
+        errorMessage = nil
+        do {
+            content = try await model.client.blackboard.content(courseID: courseID, contentID: contentID)
+        } catch {
+            if let api = error as? APIError, case .notAuthenticated = api {
+                model.expireSession()
+            }
+            errorMessage = error.localizedDescription
+        }
+    }
+}

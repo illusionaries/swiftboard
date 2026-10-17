@@ -291,6 +291,21 @@ public struct BlackboardClient: Sendable {
         return .other
     }
 
+    /// Fetches a single content item. Used when navigating from a gradebook
+    /// row, where only the content ID is known.
+    public func content(courseID: String, contentID: String) async throws -> CourseContent {
+        var request = HTTPRequest(url: makeURL("/learn/api/v1/courses/\(courseID)/contents/\(contentID)"))
+        request.headers["Accept"] = "application/json"
+        let response = try await http.send(request)
+        try Self.validate(response)
+        do {
+            let dto = try JSONDecoder.pku().decode(ContentDTO.self, from: response.data)
+            return Self.content(from: dto, courseID: courseID)
+        } catch {
+            throw APIError.decoding(Self.describe(error))
+        }
+    }
+
     // MARK: - Grades
 
     public func gradeColumns(courseID: String) async throws -> [GradeColumn] {

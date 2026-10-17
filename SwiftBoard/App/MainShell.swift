@@ -258,6 +258,8 @@ struct RouteDestination: View {
             } else {
                 EmptyStateView(symbol: "questionmark.folder", title: "找不到该内容")
             }
+        case .gradeContent(let courseID, let contentID):
+            ContentByIDView(courseID: courseID, contentID: contentID)
         case .announcement(let announcement):
             AnnouncementDetailView(announcement: announcement, course: model.course(id: announcement.courseID))
         }

@@ -74,6 +74,7 @@ enum CourseTab: String, CaseIterable, Identifiable, Hashable {
 enum AppRoute: Hashable {
     case course(id: String, tab: CourseTab)
     case content(CourseContent)
+    case gradeContent(courseID: String, contentID: String)
     case announcement(Announcement)
 }
 
@@ -112,6 +113,11 @@ final class AppRouter {
             guard parts.count >= 2, let course = model.course(id: parts[1]) else { return }
             let tab = parts.count >= 3 ? (CourseTab(rawValue: parts[2]) ?? .content) : .content
             openCourse(course, tab: tab)
+        case "gradecontent":
+            guard parts.count >= 3 else { return }
+            section = .courses
+            coursesPath = NavigationPath()
+            coursesPath.append(AppRoute.gradeContent(courseID: parts[1], contentID: parts[2]))
         case "announcement":
             guard parts.count >= 2, let item = model.announcements.first(where: { $0.id == parts[1] }) else { return }
             section = .announcements
