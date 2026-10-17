@@ -55,6 +55,7 @@ enum AppSection: String, CaseIterable, Identifiable, Hashable {
 
 enum CourseTab: String, CaseIterable, Identifiable, Hashable {
     case content
+    case videos
     case announcements
     case grades
     case info
@@ -64,6 +65,7 @@ enum CourseTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .content: "内容"
+        case .videos: "回放"
         case .announcements: "通知"
         case .grades: "成绩"
         case .info: "信息"

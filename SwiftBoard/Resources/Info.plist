@@ -35,7 +35,12 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.education</string>
-	<key>NSHumanReadableCopyright</key>
+	<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+</dict>
+<key>NSHumanReadableCopyright</key>
 	<string>SwiftBoard · 非官方北京大学教学网客户端</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>

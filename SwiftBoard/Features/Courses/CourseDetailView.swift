@@ -157,6 +157,8 @@ struct CourseDetailView: View {
         switch tab {
         case .content:
             CourseContentSection(course: course)
+        case .videos:
+            CourseVideosSection(course: course)
         case .announcements:
             CourseAnnouncementsSection(course: course)
         case .grades:

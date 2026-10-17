@@ -15,8 +15,9 @@
 
 - **统一身份认证登录**：RSA 加密密码、token 换取 Blackboard 会话；支持手机令牌与图形验证码；登录状态与 Cookie 保存在钥匙串中，重启无需重复登录。
 - **首页概览**：本学期课程数、30 天内截止的作业/任务、最新课程通知、课程封面网格。
-- **课程**：按学期分组、全部学期切换、搜索；课程详情包含内容、通知、成绩、信息四个分页。
+- **课程**：按学期分组、全部学期切换、搜索；课程详情包含内容、回放、通知、成绩、信息五个分页。
 - **课程内容**：文件夹逐层浏览，文件下载进度，系统 Quick Look 预览，分享 / 保存到「文件」。
+- **课程回放**：按课程列出课堂录像，使用原生 AVPlayer 在线播放；AES-128 密钥通过登录态获取，由本机回环服务提供给播放器，不上传任何媒体。暂不支持下载 / 导出。
 - **课程通知**：多课程聚合、按课程筛选、搜索；正文使用 WebKit 渲染，支持图片、表格与深色模式。
 - **成绩**：本学期课程成绩总览、已发布成绩 / 已获得分数、逐项得分与完成度；点击成绩项可直接进入对应作业/内容详情。数据来自 Blackboard 的 `gradebook/users/me` 接口。
 - **原生体验**：iPhone 使用 Tab 栏，iPad / Mac 使用 `NavigationSplitView`；支持深色模式、动态字体、下拉刷新、键盘快捷键、Quick Look 与分享。
@@ -57,6 +58,9 @@ project.yml                    XcodeGen 工程描述
 | 成绩项 | `GET /learn/api/v1/courses/{id}/gradebook/columns` |
 | 我的成绩 | `GET /learn/api/public/v2/courses/{id}/gradebook/users/me` |
 | 文件下载 | `/bbcswebdav/...`（携带同一会话 Cookie） |
+| 课程回放列表 | `GET /webapps/bb-streammedia-hqy-BBLEARN/videoList.action?course_id=…` |
+| 回放信息 / m3u8 | `GET https://yjapise.pku.edu.cn/courseapi/v2/schedule/get-sub-info-by-auth-data` |
+| 回放媒体 | HLS m3u8 / TS + AES-128 key（`resourcese.pku.edu.cn`） |
 
 ## 构建
 
@@ -112,12 +116,13 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 | 变量 | 作用 |
 | --- | --- |
 | `SWIFTBOARD_ACCOUNT` / `SWIFTBOARD_PASSWORD` | 启动时自动登录 |
-| `SWIFTBOARD_ROUTE` | `tab:courses`、`course:<id>:grades`、`content:<courseID>:<contentID>` |
+| `SWIFTBOARD_ROUTE` | `tab:courses`、`course:<id>:grades`、`course:<id>:videos`、`content:<courseID>:<contentID>` |
 | `SWIFTBOARD_PREVIEW` | 启动后下载并 Quick Look 预览指定文件 |
 | `SWIFTBOARD_DEMO` | 将姓名 / 学号替换为演示数据，便于截图 |
 | `SWIFTBOARD_FORCE_CAPTCHA` | 强制显示图形验证码输入框（调试 UI） |
 | `SWIFTBOARD_HISTORY` | 打开作业详情时自动展示提交记录 |
 | `SWIFTBOARD_HISTORY_PREVIEW` | 自动预览第一条提交记录中的文件 |
+| `SWIFTBOARD_VIDEO` | 打开「回放」分页后自动播放第一节课（调试用） |
 | `SWIFTBOARD_RESET` | 清除登录状态，展示登录页 |
 | `SWIFTBOARD_SNAPSHOT`（macOS） | 将窗口内容渲染为 PNG（无需录屏权限） |
 
@@ -125,7 +130,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 
 - 账号密码只保存在本机 **钥匙串**（`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`），不上传第三方。
 - Cookie 快照同样保存在钥匙串；退出登录会清除 Cookie、凭据与缓存。
-- 所有请求直连 `iaaa.pku.edu.cn` 与 `course.pku.edu.cn`，使用 HTTPS。
+- 所有请求直连北大相关域名（`iaaa.pku.edu.cn`、`course.pku.edu.cn`、`yjapise.pku.edu.cn`、`onlineroomse.pku.edu.cn`、`resourcese.pku.edu.cn`），使用 HTTPS；回放 key 只通过本机回环 HTTP 交给 AVPlayer。
 - 仓库中不包含任何真实账号凭据；`.bb_account` / `.bb_password` 已被 `.gitignore` 排除。
 - 这是一个学生作品，与北京大学、Blackboard 官方无关。
 
@@ -136,6 +141,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 - 作业提交严格按教学网 Original 表单字段实现，但本次开发**没有进行真实提交测试**（按需求约定）；首次使用时建议先拿一个非关键作业、小文件验证，并提交后在教学网核对记录。
 - 短信验证码需要网页登录；手机令牌（OTP）与图形验证码已在客户端支持。
 - 成绩与通知依赖教学网接口，若学校升级 Blackboard 可能需要适配。
+- 课程回放目前只支持在线播放，不支持下载 / 导出；回放来自北大在线课堂，需要有效的统一身份认证登录态，密钥接口可能随时调整。回放可能包含教师与同学的肖像、声音，仅限已选课同学个人学习使用，请勿传播。
 - 无推送通知；截止日期来自成绩册中带 `dueDate` 的项目。
 
 ## 致谢

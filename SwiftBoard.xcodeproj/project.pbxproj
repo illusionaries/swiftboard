@@ -8,8 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		128191D6F4A405CD8D2329C6 /* WindowSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */; };
+		17D5A34EA307D3FB946E54F2 /* VideoPlayerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */; };
 		1D5B1072FEA260E14CEDDD6B /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46DA85E2919A5FF5A286FD8 /* AppModel.swift */; };
 		203821D9D81DA31234340549 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5D60446B53DE6F3DC14930B5 /* Assets.xcassets */; };
+		22EE0A997EEF1439A6B7BA3F /* CourseVideosSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */; };
 		2D7B80239E847B3A6C9A63CF /* SwiftBoardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568548EAFFE62345D7636949 /* SwiftBoardApp.swift */; };
 		2F40597BED038F7D8D34724A /* ContentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E93AA1B50ABD1EFFF67DAB /* ContentRow.swift */; };
 		2FE89488A283CEEBC18D8B18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72E3CF97E5BE213E23464BD5 /* SettingsView.swift */; };
@@ -29,6 +31,7 @@
 		C623F83CC0C5254D05A65480 /* DownloadCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33603AC1BE5A7C5E532D406F /* DownloadCenter.swift */; };
 		C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FB5FF508B1B4F6DFB9ED7 /* LoginView.swift */; };
 		D4C72DB1D637238243A1CC7F /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381D205951116E935EA574C /* HomeView.swift */; };
+		D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */; };
 		E25933278FF01776FB717B37 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0292777A37D6E7177C74A093 /* RootView.swift */; };
 		F268D415C835D3D8BF5B3EF4 /* AnnouncementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2BBADFD674B378970DABAF6 /* AnnouncementsView.swift */; };
 /* End PBXBuildFile section */
@@ -39,7 +42,9 @@
 		15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSnapshot.swift; sourceTree = "<group>"; };
 		22B2354893FFC8B8DDBE5D8B /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		23750D9E33FE8E686FE1C617 /* AssignmentHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentHistoryView.swift; sourceTree = "<group>"; };
+		2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseVideosSection.swift; sourceTree = "<group>"; };
 		2B0F4E467815824F156C96F0 /* GradesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradesView.swift; sourceTree = "<group>"; };
+		2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalVideoServer.swift; sourceTree = "<group>"; };
 		33603AC1BE5A7C5E532D406F /* DownloadCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadCenter.swift; sourceTree = "<group>"; };
 		352EE886E845D667EC7564FB /* SwiftBoard.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SwiftBoard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FACBFFE1B71E04BEE2235D0 /* CourseGradesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseGradesSection.swift; sourceTree = "<group>"; };
@@ -59,6 +64,7 @@
 		CDCDF624064A6F3735830CE0 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		DDFBC12ACFB82E7A216238C3 /* AssignmentSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentSubmissionView.swift; sourceTree = "<group>"; };
 		E46DA85E2919A5FF5A286FD8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +183,9 @@
 				0E7F12118553FB052BF72BF1 /* CourseDetailView.swift */,
 				3FACBFFE1B71E04BEE2235D0 /* CourseGradesSection.swift */,
 				9F4046B6EC632792F3634765 /* CoursesView.swift */,
+				2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */,
+				2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */,
+				F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */,
 			);
 			path = Courses;
 			sourceTree = "<group>";
@@ -293,17 +302,20 @@
 				2F40597BED038F7D8D34724A /* ContentRow.swift in Sources */,
 				6F5BCF48DFDF9E35CF1EC3BF /* CourseDetailView.swift in Sources */,
 				A4F15A1E1068822FB3C40107 /* CourseGradesSection.swift in Sources */,
+				22EE0A997EEF1439A6B7BA3F /* CourseVideosSection.swift in Sources */,
 				3FEF855BFD8FF78D404D03B4 /* CoursesView.swift in Sources */,
 				C623F83CC0C5254D05A65480 /* DownloadCenter.swift in Sources */,
 				4C71D628D15037BE53E1A708 /* GradesView.swift in Sources */,
 				3829FD3D34B8C819BD317EAD /* HTMLView.swift in Sources */,
 				D4C72DB1D637238243A1CC7F /* HomeView.swift in Sources */,
+				D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */,
 				C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */,
 				8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */,
 				E25933278FF01776FB717B37 /* RootView.swift in Sources */,
 				2FE89488A283CEEBC18D8B18 /* SettingsView.swift in Sources */,
 				2D7B80239E847B3A6C9A63CF /* SwiftBoardApp.swift in Sources */,
 				338EAF9478B6F4BD0F35D6CB /* Theme.swift in Sources */,
+				17D5A34EA307D3FB946E54F2 /* VideoPlayerSheet.swift in Sources */,
 				128191D6F4A405CD8D2329C6 /* WindowSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

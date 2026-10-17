@@ -12,6 +12,7 @@ public struct HTTPRequest: Sendable {
     public var body: Data?
     public var contentType: String?
     public var timeout: TimeInterval
+    public var throwsOnUnauthorized: Bool
 
     public init(
         url: URL,
@@ -19,7 +20,8 @@ public struct HTTPRequest: Sendable {
         headers: [String: String] = [:],
         body: Data? = nil,
         contentType: String? = nil,
-        timeout: TimeInterval = 30
+        timeout: TimeInterval = 30,
+        throwsOnUnauthorized: Bool = true
     ) {
         self.url = url
         self.method = method
@@ -27,6 +29,7 @@ public struct HTTPRequest: Sendable {
         self.body = body
         self.contentType = contentType
         self.timeout = timeout
+        self.throwsOnUnauthorized = throwsOnUnauthorized
     }
 
     /// Builds an `application/x-www-form-urlencoded` POST request.
@@ -209,7 +212,7 @@ public struct HTTPClient: Sendable {
             url: http.url ?? request.url
         )
 
-        if result.status == 401 {
+        if result.status == 401, request.throwsOnUnauthorized {
             throw APIError.notAuthenticated
         }
         return result
