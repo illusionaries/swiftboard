@@ -138,6 +138,7 @@ final class VideoPlayerController {
     private var item: AVPlayerItem?
     private var videoServer: LocalVideoServer?
     private var statusCancellable: AnyCancellable?
+    private var shouldAutoplay = true
 
     func load(video: CourseVideo, service: CourseVideoService) async {
         stop()
