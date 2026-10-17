@@ -15,6 +15,7 @@ struct VideoPlayerSheet: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var controller = VideoPlayerController()
 
     var body: some View {
@@ -40,6 +41,11 @@ struct VideoPlayerSheet: View {
         }
         .onDisappear {
             controller.stop()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                controller.pause()
+            }
         }
         #if os(macOS)
         .frame(minWidth: 900, minHeight: 640)
@@ -135,6 +141,7 @@ final class VideoPlayerController {
 
     func load(video: CourseVideo, service: CourseVideoService) async {
         stop()
+        shouldAutoplay = true
         state = .loading
 
         do {
@@ -173,17 +180,26 @@ final class VideoPlayerController {
                     switch status {
                     case .readyToPlay:
                         self.state = .ready
-                        self.player?.play()
+                        if self.shouldAutoplay {
+                            self.player?.play()
+                        }
                     case .failed:
                         self.state = .failed(item.error?.localizedDescription ?? "回放加载失败")
                     default:
                         break
                     }
                 }
-            player.play()
+            if shouldAutoplay {
+                player.play()
+            }
         } catch {
             state = .failed(error.localizedDescription)
         }
+    }
+
+    func pause() {
+        shouldAutoplay = false
+        player?.pause()
     }
 
     func stop() {
