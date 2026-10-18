@@ -194,6 +194,8 @@ struct AssignmentSubmissionView: View {
                     }
                     if let limit = finiteAttemptLimit {
                         Chip(text: limit == 1 ? "仅一次提交" : "最多 \(limit) 次", tint: Theme.accent)
+                    } else if content.attemptLimit == 0 {
+                        Chip(text: "不限次数", tint: Theme.muted)
                     }
                     if let form, form.existingFileCount > 0 {
                         Chip(text: "已有 \(form.existingFileCount) 个文件", tint: Theme.muted)
