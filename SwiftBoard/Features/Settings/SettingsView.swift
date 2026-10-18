@@ -202,7 +202,8 @@ struct SettingsView: View {
 
     private var notificationSection: some View {
         SettingsGroup(title: "通知") {
-            Toggle(isOn: notificationBinding) {
+            HStack(spacing: 11) {
+                IconTile(symbol: "bell", tint: Theme.accent, size: 28)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("作业截止提醒")
                         .font(.subheadline)
@@ -210,11 +211,16 @@ struct SettingsView: View {
                         .font(.caption2)
                         .foregroundStyle(Theme.muted)
                 }
+                Spacer(minLength: 8)
+                Toggle("", isOn: notificationBinding)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .tint(Theme.accent)
+                    .disabled(notificationBusy)
+                    .accessibilityLabel("作业截止提醒")
             }
-            .tint(Theme.accent)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .disabled(notificationBusy)
 
             if notificationAuthorization == .denied {
                 divider
