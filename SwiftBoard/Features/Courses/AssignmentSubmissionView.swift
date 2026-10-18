@@ -1,6 +1,10 @@
 import SwiftUI
 import SwiftBoardKit
 import UniformTypeIdentifiers
+import QuickLook
+#if os(macOS)
+import QuickLookUI
+#endif
 #if os(iOS)
 import VisionKit
 #endif
@@ -33,6 +37,7 @@ struct AssignmentSubmissionView: View {
     @State private var attemptsChecked = false
     @State private var isCheckingAttempts = false
     @State private var showHistory = false
+    @State private var previewURL: URL?
 
     private struct SelectedUploadFile: Identifiable {
         let id = UUID()
@@ -109,6 +114,7 @@ struct AssignmentSubmissionView: View {
         } message: {
             Text(submissionConfirmationMessage)
         }
+        .quickLookPreview($previewURL)
         .interactiveDismissDisabled(isSubmitting)
         .onDisappear(perform: cleanup)
         #if os(macOS)
@@ -133,7 +139,9 @@ struct AssignmentSubmissionView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(10)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .cardSurface(padding: 16, radius: 16)
         }
 
@@ -363,6 +371,15 @@ struct AssignmentSubmissionView: View {
                             .foregroundStyle(Theme.muted)
                     }
                     Spacer()
+                    Button {
+                        previewURL = selectedFile.url
+                    } label: {
+                        Image(systemName: "eye")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("预览文件")
                     Button {
                         cleanupSelectedFile()
                     } label: {
