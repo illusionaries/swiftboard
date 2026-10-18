@@ -2,7 +2,10 @@ import SwiftUI
 import SwiftBoardKit
 
 struct ReplayDownloadsView: View {
+    var showsCloseButton = false
+
     @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
     @State private var sheet: ActiveSheet?
 
     private enum ActiveSheet: Identifiable {
@@ -60,6 +63,13 @@ struct ReplayDownloadsView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            if showsCloseButton {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("关闭") { dismiss() }
+                }
+            }
+        }
         .sheet(item: $sheet) { active in
             switch active {
             case .play(let item):

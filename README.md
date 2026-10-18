@@ -136,6 +136,8 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 | `SWIFTBOARD_EXPORT` | 打开「离线回放」后自动导出第一条（调试用） |
 | `SWIFTBOARD_CLEAR_DOWNLOADS` | 启动时清空全部离线回放（调试用） |
 | `SWIFTBOARD_NOTIFICATION_TEST` | 启动时申请通知权限、开启截止提醒并发送一条测试通知（调试用） |
+| `SWIFTBOARD_FORCE_LOGIN` | 启动后强制回到登录页，但不清理已下载回放（调试用） |
+| `SWIFTBOARD_LOGIN_OFFLINE` | 登录页自动打开「离线回放」（调试用） |
 | `SWIFTBOARD_RESET` | 清除登录状态，展示登录页 |
 | `SWIFTBOARD_SNAPSHOT`（macOS） | 将窗口内容渲染为 PNG（无需录屏权限） |
 
@@ -160,7 +162,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 - 回放下载在 iOS 26+ 可以通过系统持续处理任务在后台继续，进度显示在系统 Live Activity 中；iOS 18–25 与 macOS 仍是前台下载，进入后台可能暂停。
 - `BGContinuedProcessingTask` 在 iOS 模拟器上返回 `.unavailable`，只能在 iOS 26+ 真机验证；模拟器会自动回退到普通前台下载。
 - 下载会占用数百 MB 空间，请在「我的 → 离线回放」中清理。
-- 离线播放需要 App 已经进入主界面；冷启动时仍需要网络恢复登录态，纯离线冷启动尚未支持。
+- 登录页提供「离线回放」入口：即使登录态失效或冷启动无网络，也可以直接观看已下载的回放；登录后仍可在「我的 → 离线回放」管理。
 - 截止提醒基于最近一次同步到的截止日期；新公告、新作业不会在后台实时推送。开启通知需要系统权限，若在系统设置中关闭，App 内开关也会失效。
 - 回放来自北大在线课堂，需要有效的统一身份认证登录态，密钥接口可能随时调整。回放可能包含教师与同学的肖像、声音，仅限已选课同学个人学习使用，请勿传播。
 - 无推送通知；截止日期来自成绩册中带 `dueDate` 的项目。

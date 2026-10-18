@@ -16,6 +16,7 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var isSubmitting = false
     @State private var showHelp = false
+    @State private var showOfflineReplays = false
     @FocusState private var focus: Field?
 
     private enum Field: Hashable {
@@ -53,6 +54,12 @@ struct LoginView: View {
             }
         }
         .background(Theme.canvas)
+        .sheet(isPresented: $showOfflineReplays) {
+            NavigationStack {
+                ReplayDownloadsView(showsCloseButton: true)
+                    .environment(model)
+            }
+        }
         .task {
             if username.isEmpty {
                 #if DEBUG
@@ -69,6 +76,11 @@ struct LoginView: View {
             #if DEBUG
             if ProcessInfo.processInfo.environment["SWIFTBOARD_FORCE_CAPTCHA"] == "1" {
                 needsCaptcha = true
+            }
+            if ProcessInfo.processInfo.environment["SWIFTBOARD_LOGIN_OFFLINE"] == "1",
+               showOfflineReplays == false,
+               !model.replayDownloads.items.isEmpty {
+                showOfflineReplays = true
             }
             #endif
         }
@@ -316,6 +328,38 @@ struct LoginView: View {
                 .font(.caption2)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if !model.replayDownloads.items.isEmpty {
+                Button {
+                    showOfflineReplays = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "play.rectangle.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("离线回放")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Text("无需登录，观看已下载的课程")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.muted)
+                        }
+                        Spacer(minLength: 8)
+                        Text("\(model.replayDownloads.items.count) 节")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.muted)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 13)
+                    .frame(height: 52)
+                    .background(Theme.field, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
+            }
         }
     }
 

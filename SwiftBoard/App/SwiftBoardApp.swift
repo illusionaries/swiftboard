@@ -47,6 +47,9 @@ struct SwiftBoardApp: App {
                         _ = await model.deadlineNotifications.setEnabled(true, deadlines: model.deadlines)
                         await model.deadlineNotifications.sendTestNotification()
                     }
+                    if environment["SWIFTBOARD_FORCE_LOGIN"] == "1" {
+                        model.expireSession()
+                    }
                     if let route = environment["SWIFTBOARD_ROUTE"] {
                         let parts = route.split(separator: ":").map(String.init)
                         if parts.first == "content", parts.count >= 3 {
