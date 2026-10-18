@@ -1,5 +1,9 @@
 import SwiftUI
 import SwiftBoardKit
+import UserNotifications
+#if os(iOS)
+import UIKit
+#endif
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
@@ -8,6 +12,9 @@ struct SettingsView: View {
 
     @State private var confirmSignOut = false
     @State private var isClearing = false
+    @State private var notificationsEnabled = DeadlineNotificationCenter.isEnabled
+    @State private var notificationAuthorization: UNAuthorizationStatus = .notDetermined
+    @State private var notificationBusy = false
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -23,6 +30,7 @@ struct SettingsView: View {
                 appearanceSection
                 dataSection
                 replaySection
+                notificationSection
                 aboutSection
                 signOutButton
                 footer
@@ -45,6 +53,9 @@ struct SettingsView: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("将清除本机保存的登录状态与缓存，账号密码会从钥匙串中移除。")
+        }
+        .task {
+            await refreshNotificationState()
         }
     }
 
@@ -187,6 +198,89 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private var notificationSection: some View {
+        SettingsGroup(title: "通知") {
+            Toggle(isOn: notificationBinding) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("作业截止提醒")
+                        .font(.subheadline)
+                    Text("截止前 24 小时和 1 小时发送本地通知")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.muted)
+                }
+            }
+            .tint(Theme.accent)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .disabled(notificationBusy)
+
+            if notificationAuthorization == .denied {
+                divider
+                Button {
+                    openNotificationSettings()
+                } label: {
+                    SettingsActionRow(
+                        symbol: "bell.slash",
+                        title: "系统通知权限已关闭",
+                        detail: "前往设置",
+                        tint: Theme.muted
+                    )
+                }
+                .buttonStyle(.plain)
+            } else if notificationsEnabled {
+                divider
+                Button {
+                    Task { await model.deadlineNotifications.sendTestNotification() }
+                } label: {
+                    SettingsActionRow(
+                        symbol: "bell.badge",
+                        title: "发送测试通知",
+                        detail: "5 秒后",
+                        tint: Theme.accent
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var notificationBinding: Binding<Bool> {
+        Binding(
+            get: { notificationsEnabled },
+            set: { newValue in
+                notificationsEnabled = newValue
+                notificationBusy = true
+                Task {
+                    let effective = await model.deadlineNotifications.setEnabled(
+                        newValue,
+                        deadlines: model.deadlines
+                    )
+                    notificationAuthorization = model.deadlineNotifications.authorizationStatus
+                    notificationsEnabled = effective
+                    notificationBusy = false
+                }
+            }
+        )
+    }
+
+    private func refreshNotificationState() async {
+        await model.deadlineNotifications.refreshAuthorization()
+        notificationAuthorization = model.deadlineNotifications.authorizationStatus
+        notificationsEnabled = DeadlineNotificationCenter.isEnabled
+    }
+
+    private func openNotificationSettings() {
+        #if os(iOS)
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            openURL(url)
+        }
+        #else
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+            openURL(url)
+        }
+        #endif
     }
 
     private var aboutSection: some View {

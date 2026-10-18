@@ -18,6 +18,7 @@
 - **课程**：按学期分组、全部学期切换、搜索；课程详情包含内容、回放、通知、成绩、信息五个分页。
 - **课程内容**：文件夹逐层浏览，文件下载进度，系统 Quick Look 预览，分享 / 保存到「文件」。
 - **课程回放**：按课程列出课堂录像，使用原生 AVPlayer 在线播放；支持把回放分片下载、解密到本机，离线播放，并在「我的 → 离线回放」中管理。下载后可导出视频并分享 / 保存到文件：macOS 导出 MP4，iOS 导出 TS（iOS 的 AVFoundation 不能把 MPEG-TS 直接封装为 MP4）。iOS 26+ 使用 `BGContinuedProcessingTask` 继续后台下载，系统会通过 Live Activity 展示进度；更早版本与 macOS 在前台下载。AES-128 密钥通过登录态获取，由本机回环服务提供给播放器，不上传任何媒体。
+- **作业截止提醒**：在「我的 → 通知」中开启后，按已同步的截止时间在截止前 24 小时和 1 小时发送本地通知；支持发送测试通知。不轮询后台，因此新公告/新作业的实时提醒不在这一版范围内。
 - **课程通知**：多课程聚合、按课程筛选、搜索；正文使用 WebKit 渲染，支持图片、表格与深色模式。
 - **成绩**：本学期课程成绩总览、已发布成绩 / 已获得分数、逐项得分与完成度；点击成绩项可直接进入对应作业/内容详情。数据来自 Blackboard 的 `gradebook/users/me` 接口。
 - **原生体验**：iPhone 使用 Tab 栏，iPad / Mac 使用 `NavigationSplitView`；支持深色模式、动态字体、下拉刷新、键盘快捷键、Quick Look 与分享。
@@ -128,6 +129,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 | `SWIFTBOARD_OFFLINE` | 打开「离线回放」后自动播放第一条（调试用） |
 | `SWIFTBOARD_EXPORT` | 打开「离线回放」后自动导出第一条（调试用） |
 | `SWIFTBOARD_CLEAR_DOWNLOADS` | 启动时清空全部离线回放（调试用） |
+| `SWIFTBOARD_NOTIFICATION_TEST` | 启动时申请通知权限、开启截止提醒并发送一条测试通知（调试用） |
 | `SWIFTBOARD_RESET` | 清除登录状态，展示登录页 |
 | `SWIFTBOARD_SNAPSHOT`（macOS） | 将窗口内容渲染为 PNG（无需录屏权限） |
 
@@ -153,6 +155,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 - `BGContinuedProcessingTask` 在 iOS 模拟器上返回 `.unavailable`，只能在 iOS 26+ 真机验证；模拟器会自动回退到普通前台下载。
 - 下载会占用数百 MB 空间，请在「我的 → 离线回放」中清理。
 - 离线播放需要 App 已经进入主界面；冷启动时仍需要网络恢复登录态，纯离线冷启动尚未支持。
+- 截止提醒基于最近一次同步到的截止日期；新公告、新作业不会在后台实时推送。开启通知需要系统权限，若在系统设置中关闭，App 内开关也会失效。
 - 回放来自北大在线课堂，需要有效的统一身份认证登录态，密钥接口可能随时调整。回放可能包含教师与同学的肖像、声音，仅限已选课同学个人学习使用，请勿传播。
 - 无推送通知；截止日期来自成绩册中带 `dueDate` 的项目。
 

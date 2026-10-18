@@ -12,6 +12,7 @@
 		17D5A34EA307D3FB946E54F2 /* VideoPlayerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */; };
 		1D5B1072FEA260E14CEDDD6B /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46DA85E2919A5FF5A286FD8 /* AppModel.swift */; };
 		203821D9D81DA31234340549 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5D60446B53DE6F3DC14930B5 /* Assets.xcassets */; };
+		20BDF96471DBE478D273122E /* NotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BC39ADE6413018314D6FFE /* NotificationDelegate.swift */; };
 		22EE0A997EEF1439A6B7BA3F /* CourseVideosSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */; };
 		2D7B80239E847B3A6C9A63CF /* SwiftBoardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568548EAFFE62345D7636949 /* SwiftBoardApp.swift */; };
 		2F40597BED038F7D8D34724A /* ContentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E93AA1B50ABD1EFFF67DAB /* ContentRow.swift */; };
@@ -33,6 +34,7 @@
 		C331A6C35D4B52B8BC5488AD /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDCDF624064A6F3735830CE0 /* AppRouter.swift */; };
 		C623F83CC0C5254D05A65480 /* DownloadCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33603AC1BE5A7C5E532D406F /* DownloadCenter.swift */; };
 		C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FB5FF508B1B4F6DFB9ED7 /* LoginView.swift */; };
+		D32ADA655DD651A92C4DEBEC /* DeadlineNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21509CB2462B03ACBB12EA90 /* DeadlineNotificationCenter.swift */; };
 		D4C72DB1D637238243A1CC7F /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381D205951116E935EA574C /* HomeView.swift */; };
 		D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */; };
 		E25933278FF01776FB717B37 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0292777A37D6E7177C74A093 /* RootView.swift */; };
@@ -41,8 +43,10 @@
 
 /* Begin PBXFileReference section */
 		0292777A37D6E7177C74A093 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		06BC39ADE6413018314D6FFE /* NotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDelegate.swift; sourceTree = "<group>"; };
 		0E7F12118553FB052BF72BF1 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 		15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSnapshot.swift; sourceTree = "<group>"; };
+		21509CB2462B03ACBB12EA90 /* DeadlineNotificationCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineNotificationCenter.swift; sourceTree = "<group>"; };
 		22B2354893FFC8B8DDBE5D8B /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		23750D9E33FE8E686FE1C617 /* AssignmentHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentHistoryView.swift; sourceTree = "<group>"; };
 		2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseVideosSection.swift; sourceTree = "<group>"; };
@@ -88,6 +92,7 @@
 		0792C3C63AF754D045010707 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				21509CB2462B03ACBB12EA90 /* DeadlineNotificationCenter.swift */,
 				72E3CF97E5BE213E23464BD5 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -156,6 +161,7 @@
 				CDCDF624064A6F3735830CE0 /* AppRouter.swift */,
 				33603AC1BE5A7C5E532D406F /* DownloadCenter.swift */,
 				5CDB0447D34CB8FA34045219 /* MainShell.swift */,
+				06BC39ADE6413018314D6FFE /* NotificationDelegate.swift */,
 				0292777A37D6E7177C74A093 /* RootView.swift */,
 				568548EAFFE62345D7636949 /* SwiftBoardApp.swift */,
 				15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */,
@@ -313,6 +319,7 @@
 				A4F15A1E1068822FB3C40107 /* CourseGradesSection.swift in Sources */,
 				22EE0A997EEF1439A6B7BA3F /* CourseVideosSection.swift in Sources */,
 				3FEF855BFD8FF78D404D03B4 /* CoursesView.swift in Sources */,
+				D32ADA655DD651A92C4DEBEC /* DeadlineNotificationCenter.swift in Sources */,
 				C623F83CC0C5254D05A65480 /* DownloadCenter.swift in Sources */,
 				4C71D628D15037BE53E1A708 /* GradesView.swift in Sources */,
 				3829FD3D34B8C819BD317EAD /* HTMLView.swift in Sources */,
@@ -320,6 +327,7 @@
 				D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */,
 				C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */,
 				8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */,
+				20BDF96471DBE478D273122E /* NotificationDelegate.swift in Sources */,
 				40BE69F2E5F56EA1BE7E47A2 /* ReplayDownloadCenter.swift in Sources */,
 				85BF6C205E78CF9ABD3846E4 /* ReplayDownloadsView.swift in Sources */,
 				02FB931B1B817F1D9BBE454B /* ReplayExportSheet.swift in Sources */,

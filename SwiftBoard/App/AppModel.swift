@@ -41,6 +41,7 @@ final class AppModel {
 
     let client = PKUClient()
     let replayDownloads = ReplayDownloadCenter()
+    let deadlineNotifications = DeadlineNotificationCenter()
     private let cacheURL: URL
     private var announcementsCache: [String: [Announcement]] = [:]
     private var contentCache: [String: [CourseContent]] = [:]
@@ -128,6 +129,7 @@ final class AppModel {
             profile = maskedProfile(cached)
             phase = .ready
             loadSnapshot()
+            await deadlineNotifications.sync(deadlines: deadlines)
             await refreshAll()
             debugLog("restored session for \(cached.userName), \(courses.count) courses")
             return
@@ -165,6 +167,7 @@ final class AppModel {
         await client.signOut()
         client.credentials.clear()
         replayDownloads.deleteAll()
+        await deadlineNotifications.clear()
         clearMemory()
         try? FileManager.default.removeItem(at: cacheURL)
         phase = .login
@@ -221,6 +224,7 @@ final class AppModel {
         guard !targets.isEmpty else {
             announcements = []
             deadlines = []
+            await deadlineNotifications.sync(deadlines: deadlines)
             return
         }
 
@@ -269,6 +273,7 @@ final class AppModel {
         deadlines = allDeadlines
             .filter { $0.dueDate > Date().addingTimeInterval(-14 * 24 * 3600) }
             .sorted { $0.dueDate < $1.dueDate }
+        await deadlineNotifications.sync(deadlines: deadlines)
         lastUpdated = Date()
     }
 
@@ -382,6 +387,7 @@ final class AppModel {
 
     func clearCache() {
         try? FileManager.default.removeItem(at: cacheURL)
+        Task { await deadlineNotifications.sync(deadlines: []) }
         courses = []
         terms = []
         announcements = []
