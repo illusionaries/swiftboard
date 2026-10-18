@@ -91,6 +91,11 @@ final class ReplayDownloadCenter {
         var mutableRoot = root
         try? mutableRoot.setResourceValues(values)
         loadIndex()
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["SWIFTBOARD_CLEAR_DOWNLOADS"] == "1" {
+            deleteAll()
+        }
+        #endif
         #if os(iOS)
         if #available(iOS 26.0, *) {
             registerContinuedProcessing()
@@ -321,6 +326,11 @@ final class ReplayDownloadCenter {
                         states[videoID] = .downloading(completed: completed, total: total)
                         #if os(iOS)
                         backgroundProgress?.completedUnitCount = Int64(completed)
+                        #if DEBUG
+                        if completed % 20 == 0 || completed == total {
+                            print("[background] progress \(completed)/\(total)")
+                        }
+                        #endif
                         #endif
                     }
                 }
@@ -392,18 +402,30 @@ final class ReplayDownloadCenter {
 
     #if os(iOS)
     @available(iOS 26.0, *)
-    private func registerContinuedProcessing() {
-        guard !Self.didRegisterContinuedProcessing else { return }
-        Self.didRegisterContinuedProcessing = true
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.backgroundTaskIdentifier, using: nil) { [weak self] task in
-            guard let task = task as? BGContinuedProcessingTask else {
+    nonisolated private static func makeLaunchHandler(
+        center: ReplayDownloadCenter
+    ) -> @Sendable (BGTask) -> Void {
+        return { task in
+            guard let continued = task as? BGContinuedProcessingTask else {
                 task.setTaskCompleted(success: false)
                 return
             }
-            Task { @MainActor [weak self] in
-                await self?.handleContinuedProcessing(task)
+            let box = ContinuedTaskBox(continued)
+            Task { @MainActor in
+                await center.handleContinuedProcessing(box.task)
             }
         }
+    }
+
+    @available(iOS 26.0, *)
+    private func registerContinuedProcessing() {
+        guard !Self.didRegisterContinuedProcessing else { return }
+        Self.didRegisterContinuedProcessing = true
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: Self.backgroundTaskIdentifier,
+            using: nil,
+            launchHandler: Self.makeLaunchHandler(center: self)
+        )
     }
 
     @available(iOS 26.0, *)
@@ -432,6 +454,9 @@ final class ReplayDownloadCenter {
             task.setTaskCompleted(success: false)
             return
         }
+        #if DEBUG
+        print("[background] continued task started for \(videoID)")
+        #endif
         backgroundProgress = task.progress
         if let state = states[videoID], case .downloading(let completed, let total) = state, total > 0 {
             task.progress.totalUnitCount = Int64(total)
@@ -443,6 +468,9 @@ final class ReplayDownloadCenter {
         await downloadTask.value
         let success = item(for: videoID) != nil
         backgroundProgress = nil
+        #if DEBUG
+        print("[background] continued task finished success=\(success)")
+        #endif
         task.setTaskCompleted(success: success)
     }
     #endif
@@ -473,6 +501,16 @@ final class ReplayDownloadCenter {
         return String(format: "replay-%016llx", hash)
     }
 }
+
+#if os(iOS)
+@available(iOS 26.0, *)
+private final class ContinuedTaskBox: @unchecked Sendable {
+    let task: BGContinuedProcessingTask
+    init(_ task: BGContinuedProcessingTask) {
+        self.task = task
+    }
+}
+#endif
 
 // MARK: - Plan
 

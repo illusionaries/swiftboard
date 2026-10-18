@@ -127,6 +127,7 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 | `SWIFTBOARD_DOWNLOAD_LIMIT` | 限制下载分片数，用于快速验证下载/离线（调试用） |
 | `SWIFTBOARD_OFFLINE` | 打开「离线回放」后自动播放第一条（调试用） |
 | `SWIFTBOARD_EXPORT` | 打开「离线回放」后自动导出第一条（调试用） |
+| `SWIFTBOARD_CLEAR_DOWNLOADS` | 启动时清空全部离线回放（调试用） |
 | `SWIFTBOARD_RESET` | 清除登录状态，展示登录页 |
 | `SWIFTBOARD_SNAPSHOT`（macOS） | 将窗口内容渲染为 PNG（无需录屏权限） |
 
