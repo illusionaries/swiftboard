@@ -50,9 +50,10 @@ struct HomeView: View {
     @Environment(AppRouter.self) private var router
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                header
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    header(deadlineAction: deadlineAction(proxy: proxy))
 
                 if let error = model.loadError {
                     ErrorBanner(message: error) {
@@ -77,16 +78,17 @@ struct HomeView: View {
                     }
                     announcementSection
                     courseSection
+                    }
                 }
+                .padding(.horizontal, 26)
+                .padding(.top, 18)
+                .padding(.bottom, 48)
+                .frame(maxWidth: 1120, alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 26)
-            .padding(.top, 18)
-            .padding(.bottom, 48)
-            .frame(maxWidth: 1120, alignment: .leading)
-            .frame(maxWidth: .infinity)
+            .background(Theme.canvas)
+            .refreshable { await model.refreshAll() }
         }
-        .background(Theme.canvas)
-        .refreshable { await model.refreshAll() }
         .navigationTitle("")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -111,7 +113,16 @@ struct HomeView: View {
 
     // MARK: - Header
 
-    private var header: some View {
+    private func deadlineAction(proxy: ScrollViewProxy) -> (() -> Void)? {
+        guard !model.upcomingDeadlines.isEmpty else { return nil }
+        return {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                proxy.scrollTo("home.deadlines", anchor: .top)
+            }
+        }
+    }
+
+    private func header(deadlineAction: (() -> Void)?) -> some View {
         ZStack(alignment: .topTrailing) {
             RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .fill(
@@ -160,9 +171,24 @@ struct HomeView: View {
                 Spacer(minLength: 18)
 
                 HStack(spacing: 10) {
-                    statPill(icon: "books.vertical", value: "\(model.currentCourses.count)", label: "课程")
-                    statPill(icon: "clock", value: "\(model.upcomingDeadlines.count)", label: "待办")
-                    statPill(icon: "megaphone", value: "\(model.announcements.count)", label: "通知")
+                    statPill(
+                        icon: "books.vertical",
+                        value: "\(model.currentCourses.count)",
+                        label: "课程",
+                        action: { router.section = .courses }
+                    )
+                    statPill(
+                        icon: "clock",
+                        value: "\(model.upcomingDeadlines.count)",
+                        label: "待办",
+                        action: deadlineAction
+                    )
+                    statPill(
+                        icon: "megaphone",
+                        value: "\(model.announcements.count)",
+                        label: "通知",
+                        action: { router.section = .announcements }
+                    )
                 }
             }
             .padding(22)
@@ -171,8 +197,13 @@ struct HomeView: View {
         .shadow(color: Theme.accentDeep.opacity(0.22), radius: 18, x: 0, y: 10)
     }
 
-    private func statPill(icon: String, value: String, label: String) -> some View {
-        HStack(spacing: 6) {
+    private func statPill(
+        icon: String,
+        value: String,
+        label: String,
+        action: (() -> Void)?
+    ) -> some View {
+        let content = HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .semibold))
             Text(value)
@@ -186,6 +217,20 @@ struct HomeView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(.white.opacity(0.12), in: Capsule())
+        .contentShape(Capsule())
+        .accessibilityLabel("\(value) \(label)")
+
+        return Group {
+            if let action {
+                Button(action: action) {
+                    content
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("查看\(label)")
+            } else {
+                content
+            }
+        }
     }
 
     // MARK: - Deadlines
@@ -198,6 +243,7 @@ struct HomeView: View {
                 actionTitle: nil,
                 action: nil
             )
+            .id("home.deadlines")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 258), spacing: 12)], spacing: 12) {
                 ForEach(model.upcomingDeadlines.prefix(4)) { deadline in
                     NavigationLink(value: AppRoute.course(id: deadline.courseID, tab: .grades)) {
