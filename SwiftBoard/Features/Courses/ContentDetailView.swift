@@ -178,6 +178,9 @@ struct ContentDetailView: View {
                     if let points = content.possiblePoints, points > 0 {
                         Chip(text: "\(formatScore(points)) 分", tint: Theme.accent)
                     }
+                    if content.kind == .assignment, let limit = content.attemptLimit, limit > 0 {
+                        Chip(text: limit == 1 ? "仅一次提交" : "最多 \(limit) 次", tint: Theme.accent)
+                    }
                     if let file = content.file {
                         Chip(text: fileExtension(file.name), tint: Theme.muted)
                     }

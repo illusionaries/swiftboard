@@ -53,23 +53,16 @@ enum ScannedDocumentPDF {
             throw ScanError.noPages
         }
 
-        let pageBounds = CGRect(x: 0, y: 0, width: 595, height: 842) // A4 at 72 dpi
-        let renderer = UIGraphicsPDFRenderer(bounds: pageBounds)
+        // Keep each scanned page at its original size and aspect ratio instead
+        // of forcing it onto an A4 sheet.
+        let firstImage = scan.imageOfPage(at: 0)
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: firstImage.size))
         let data = renderer.pdfData { context in
             for pageIndex in 0..<scan.pageCount {
                 let image = scan.imageOfPage(at: pageIndex)
-                context.beginPage()
-
-                let content = pageBounds.insetBy(dx: 28, dy: 32)
-                let scale = min(content.width / image.size.width, content.height / image.size.height)
-                let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-                let rect = CGRect(
-                    x: content.midX - size.width / 2,
-                    y: content.midY - size.height / 2,
-                    width: size.width,
-                    height: size.height
-                )
-                image.draw(in: rect)
+                let pageBounds = CGRect(origin: .zero, size: image.size)
+                context.beginPage(withBounds: pageBounds, pageInfo: [:])
+                image.draw(in: pageBounds)
             }
         }
 
