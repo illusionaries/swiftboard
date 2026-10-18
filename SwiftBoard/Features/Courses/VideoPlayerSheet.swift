@@ -382,6 +382,7 @@ private struct MacVideoPlayer: NSViewRepresentable {
         view.controlsStyle = .inline
         view.videoGravity = .resizeAspect
         view.allowsPictureInPicturePlayback = true
+        view.showsFullScreenToggleButton = true
         return view
     }
 
