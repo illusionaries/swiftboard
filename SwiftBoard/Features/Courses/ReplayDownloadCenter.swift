@@ -3,6 +3,9 @@ import Observation
 import CommonCrypto
 import AVFoundation
 import SwiftBoardKit
+#if os(iOS)
+import BackgroundTasks
+#endif
 
 struct ReplayDownload: Identifiable, Codable, Hashable, Sendable {
     let videoID: String
@@ -67,6 +70,14 @@ final class ReplayDownloadCenter {
     private var tasks: [String: Task<Void, Never>] = [:]
     private let fileManager = FileManager.default
 
+    #if os(iOS)
+    private static let backgroundTaskIdentifier = "blog.illusion.swiftboard.replay-download"
+    private static var didRegisterContinuedProcessing = false
+    private var activeDownloadTask: Task<Void, Never>?
+    private var activeDownloadVideoID: String?
+    private var backgroundProgress: Progress?
+    #endif
+
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
@@ -80,6 +91,11 @@ final class ReplayDownloadCenter {
         var mutableRoot = root
         try? mutableRoot.setResourceValues(values)
         loadIndex()
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            registerContinuedProcessing()
+        }
+        #endif
     }
 
     // MARK: - Queries
@@ -197,6 +213,16 @@ final class ReplayDownloadCenter {
             await self.performDownload(video: video, course: course, service: service)
         }
         tasks[video.id] = task
+
+        #if os(iOS)
+        if activeDownloadTask == nil {
+            activeDownloadTask = task
+            activeDownloadVideoID = video.id
+            if #available(iOS 26.0, *) {
+                submitContinuedProcessing(for: video)
+            }
+        }
+        #endif
     }
 
     func cancel(videoID: String) {
@@ -227,7 +253,16 @@ final class ReplayDownloadCenter {
 
     private func performDownload(video: CourseVideo, course: Course, service: CourseVideoService) async {
         let videoID = video.id
-        defer { tasks[videoID] = nil }
+        defer {
+            tasks[videoID] = nil
+            #if os(iOS)
+            if activeDownloadVideoID == videoID {
+                activeDownloadTask = nil
+                activeDownloadVideoID = nil
+                backgroundProgress = nil
+            }
+            #endif
+        }
 
         do {
             let prepared = try await service.prepare(video: video)
@@ -260,6 +295,10 @@ final class ReplayDownloadCenter {
             }
             let total = plan.segments.count
             states[videoID] = .downloading(completed: completed, total: total)
+            #if os(iOS)
+            backgroundProgress?.totalUnitCount = Int64(total)
+            backgroundProgress?.completedUnitCount = Int64(completed)
+            #endif
 
             let batchSize = 4
             var start = 0
@@ -280,6 +319,9 @@ final class ReplayDownloadCenter {
                     for try await _ in group {
                         completed += 1
                         states[videoID] = .downloading(completed: completed, total: total)
+                        #if os(iOS)
+                        backgroundProgress?.completedUnitCount = Int64(completed)
+                        #endif
                     }
                 }
                 start = end
@@ -345,6 +387,65 @@ final class ReplayDownloadCenter {
         }
         throw lastError ?? ReplayDownloadError.downloadFailed
     }
+
+    // MARK: - Background continuation
+
+    #if os(iOS)
+    @available(iOS 26.0, *)
+    private func registerContinuedProcessing() {
+        guard !Self.didRegisterContinuedProcessing else { return }
+        Self.didRegisterContinuedProcessing = true
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.backgroundTaskIdentifier, using: nil) { [weak self] task in
+            guard let task = task as? BGContinuedProcessingTask else {
+                task.setTaskCompleted(success: false)
+                return
+            }
+            Task { @MainActor [weak self] in
+                await self?.handleContinuedProcessing(task)
+            }
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private func submitContinuedProcessing(for video: CourseVideo) {
+        let request = BGContinuedProcessingTaskRequest(
+            identifier: Self.backgroundTaskIdentifier,
+            title: "正在下载课程回放",
+            subtitle: video.title
+        )
+        request.strategy = .queue
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            #if DEBUG
+            print("[background] submitted continued processing")
+            #endif
+        } catch {
+            #if DEBUG
+            print("[background] submit failed: \(error)")
+            #endif
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private func handleContinuedProcessing(_ task: BGContinuedProcessingTask) async {
+        guard let videoID = activeDownloadVideoID, let downloadTask = activeDownloadTask else {
+            task.setTaskCompleted(success: false)
+            return
+        }
+        backgroundProgress = task.progress
+        if let state = states[videoID], case .downloading(let completed, let total) = state, total > 0 {
+            task.progress.totalUnitCount = Int64(total)
+            task.progress.completedUnitCount = Int64(completed)
+        }
+        task.expirationHandler = {
+            downloadTask.cancel()
+        }
+        await downloadTask.value
+        let success = item(for: videoID) != nil
+        backgroundProgress = nil
+        task.setTaskCompleted(success: success)
+    }
+    #endif
 
     // MARK: - Persistence
 

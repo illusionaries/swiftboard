@@ -35,7 +35,11 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.education</string>
-	<key>NSAppTransportSecurity</key>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+    <string>blog.illusion.swiftboard.replay-download</string>
+</array>
+<key>NSAppTransportSecurity</key>
 <dict>
     <key>NSAllowsLocalNetworking</key>
     <true/>
