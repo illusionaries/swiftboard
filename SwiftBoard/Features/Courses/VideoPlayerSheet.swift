@@ -11,12 +11,26 @@ import AppKit
 #endif
 
 struct VideoPlayerSheet: View {
-    let video: CourseVideo
+    private let video: CourseVideo?
+    private let course: Course?
+    private let offline: ReplayDownload?
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @State private var controller = VideoPlayerController()
+
+    init(video: CourseVideo, course: Course) {
+        self.video = video
+        self.course = course
+        self.offline = nil
+    }
+
+    init(download: ReplayDownload) {
+        self.video = nil
+        self.course = nil
+        self.offline = download
+    }
 
     var body: some View {
         NavigationStack {
@@ -34,11 +48,14 @@ struct VideoPlayerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") { dismiss() }
                 }
+                if let video, let course, offline == nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        downloadButton(video: video, course: course)
+                    }
+                }
             }
         }
-        .task {
-            await controller.load(video: video, service: model.client.blackboard.videos)
-        }
+        .task { await load() }
         .onDisappear {
             controller.stop()
         }
@@ -72,9 +89,7 @@ struct VideoPlayerSheet: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("重试") {
-                        Task {
-                            await controller.load(video: video, service: model.client.blackboard.videos)
-                        }
+                        Task { await load() }
                     }
                     .buttonStyle(.bordered)
                     .tint(.white)
@@ -99,28 +114,129 @@ struct VideoPlayerSheet: View {
 
     private var infoArea: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(video.title)
+            if let courseTitle, !courseTitle.isEmpty {
+                Text(courseTitle)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.accent)
+                    .lineLimit(1)
+            }
+            Text(displayTitle)
                 .font(.headline)
                 .lineLimit(2)
             HStack(spacing: 14) {
-                if !video.teacher.isEmpty {
-                    Label(video.teacher, systemImage: "person")
+                if !displayTeacher.isEmpty {
+                    Label(displayTeacher, systemImage: "person")
                 }
-                if !video.time.isEmpty {
-                    Label(video.time, systemImage: "clock")
+                if !displayTime.isEmpty {
+                    Label(displayTime, systemImage: "clock")
                 }
             }
             .font(.caption)
             .foregroundStyle(Theme.muted)
             .lineLimit(1)
 
-            Text("回放由北大在线课堂提供，仅对已选课同学开放，请勿传播。")
+            Text(offline == nil
+                 ? "回放由北大在线课堂提供，仅对已选课同学开放，请勿传播。"
+                 : "已下载到本机，仅限个人学习使用，请勿传播。")
                 .font(.caption2)
                 .foregroundStyle(Theme.muted)
                 .padding(.top, 2)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var displayTitle: String {
+        offline?.title ?? video?.title ?? "课程回放"
+    }
+
+    private var displayTeacher: String {
+        offline?.teacher ?? video?.teacher ?? ""
+    }
+
+    private var displayTime: String {
+        offline?.time ?? video?.time ?? ""
+    }
+
+    private var courseTitle: String? {
+        offline?.courseTitle ?? course?.title
+    }
+
+    @ViewBuilder
+    private func downloadButton(video: CourseVideo, course: Course) -> some View {
+        if model.replayDownloads.item(for: video.id) != nil {
+            Label("已下载", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(Theme.accent)
+        } else if let state = model.replayDownloads.state(for: video.id) {
+            switch state {
+            case .downloading(let completed, let total):
+                Button {
+                    model.replayDownloads.cancel(videoID: video.id)
+                } label: {
+                    HStack(spacing: 4) {
+                        ProgressView().controlSize(.mini)
+                        Text(total > 0 ? "\(Int(Double(completed) / Double(total) * 100))%" : "下载中")
+                            .font(.caption)
+                            .monospacedDigit()
+                    }
+                }
+                .accessibilityLabel("取消下载")
+            case .failed:
+                Button {
+                    startDownload(video: video, course: course)
+                } label: {
+                    Label("重试下载", systemImage: "arrow.clockwise")
+                }
+            case .completed:
+                Label("已下载", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+            }
+        } else {
+            Button {
+                startDownload(video: video, course: course)
+            } label: {
+                Label("下载", systemImage: "arrow.down.circle")
+            }
+            .accessibilityHint("下载后在「我的 → 离线回放」中观看")
+        }
+    }
+
+    private func startDownload(video: CourseVideo, course: Course) {
+        model.replayDownloads.startDownload(
+            video: video,
+            course: course,
+            service: model.client.blackboard.videos
+        )
+    }
+
+    private func load() async {
+        if let offline {
+            await controller.loadLocal(
+                playlist: offline.playlistText,
+                segmentsDirectory: model.replayDownloads.segmentsDirectory(for: offline)
+            )
+        } else if let video {
+            if let downloaded = model.replayDownloads.item(for: video.id) {
+                await controller.loadLocal(
+                    playlist: downloaded.playlistText,
+                    segmentsDirectory: model.replayDownloads.segmentsDirectory(for: downloaded)
+                )
+            } else {
+                await controller.load(video: video, service: model.client.blackboard.videos)
+                #if DEBUG
+                if ProcessInfo.processInfo.environment["SWIFTBOARD_DOWNLOAD"] == "1",
+                   let course,
+                   ProcessInfo.processInfo.environment["SWIFTBOARD_VIDEO"] == "1" {
+                    startDownload(video: video, course: course)
+                }
+                #endif
+            }
+        }
+        if scenePhase != .active {
+            controller.pause()
+        }
     }
 }
 
@@ -147,54 +263,72 @@ final class VideoPlayerController {
 
         do {
             let prepared = try await service.prepare(video: video)
-            let server = LocalVideoServer(keys: prepared.keys)
-            let port = try await server.start()
-            self.videoServer = server
-            var playlist = prepared.playlist
-            if !prepared.keys.isEmpty {
-                playlist = playlist.replacingOccurrences(
-                    of: "swiftboard-key://key/",
-                    with: "http://127.0.0.1:\(port)/key/"
-                )
-            }
-            server.setPlaylist(playlist)
-            guard let url = URL(string: "http://127.0.0.1:\(port)/playlist.m3u8") else {
-                throw VideoError.invalidPlaylist
-            }
-            let asset = AVURLAsset(url: url)
-            let item = AVPlayerItem(asset: asset)
-            let player = AVPlayer(playerItem: item)
-            player.automaticallyWaitsToMinimizeStalling = true
-
-            self.item = item
-            self.player = player
-
-            #if os(iOS)
-            try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-            try? AVAudioSession.sharedInstance().setActive(true)
-            #endif
-
-            statusCancellable = item.publisher(for: \.status)
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] status in
-                    guard let self else { return }
-                    switch status {
-                    case .readyToPlay:
-                        self.state = .ready
-                        if self.shouldAutoplay {
-                            self.player?.play()
-                        }
-                    case .failed:
-                        self.state = .failed(item.error?.localizedDescription ?? "回放加载失败")
-                    default:
-                        break
-                    }
-                }
-            if shouldAutoplay {
-                player.play()
-            }
+            try await start(playlist: prepared.playlist, segmentsDirectory: nil, keys: prepared.keys)
         } catch {
             state = .failed(error.localizedDescription)
+        }
+    }
+
+    func loadLocal(playlist: String, segmentsDirectory: URL) async {
+        stop()
+        shouldAutoplay = true
+        state = .loading
+
+        do {
+            try await start(playlist: playlist, segmentsDirectory: segmentsDirectory, keys: [])
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
+    }
+
+    private func start(playlist: String, segmentsDirectory: URL?, keys: [Data]) async throws {
+        let server = LocalVideoServer(keys: keys, segmentsDirectory: segmentsDirectory)
+        let port = try await server.start()
+        self.videoServer = server
+
+        var text = playlist
+        if !keys.isEmpty {
+            text = text.replacingOccurrences(
+                of: "swiftboard-key://key/",
+                with: "http://127.0.0.1:\(port)/key/"
+            )
+        }
+        server.setPlaylist(text)
+
+        guard let url = URL(string: "http://127.0.0.1:\(port)/playlist.m3u8") else {
+            throw VideoError.invalidPlaylist
+        }
+        let asset = AVURLAsset(url: url)
+        let item = AVPlayerItem(asset: asset)
+        let player = AVPlayer(playerItem: item)
+        player.automaticallyWaitsToMinimizeStalling = true
+
+        self.item = item
+        self.player = player
+
+        #if os(iOS)
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+        try? AVAudioSession.sharedInstance().setActive(true)
+        #endif
+
+        statusCancellable = item.publisher(for: \.status)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                guard let self else { return }
+                switch status {
+                case .readyToPlay:
+                    self.state = .ready
+                    if self.shouldAutoplay {
+                        self.player?.play()
+                    }
+                case .failed:
+                    self.state = .failed(item.error?.localizedDescription ?? "回放加载失败")
+                default:
+                    break
+                }
+            }
+        if shouldAutoplay {
+            player.play()
         }
     }
 
@@ -216,7 +350,6 @@ final class VideoPlayerController {
         #endif
     }
 }
-
 
 #if os(macOS)
 private struct MacVideoPlayer: NSViewRepresentable {

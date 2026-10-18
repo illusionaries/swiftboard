@@ -7,13 +7,15 @@ import SwiftBoardKit
 /// the playlist and key never leave the device.
 final class LocalVideoServer: @unchecked Sendable {
     private let keys: [Data]
+    private let segmentsDirectory: URL?
     private let queue = DispatchQueue(label: "SwiftBoard.LocalVideoServer")
     private var listener: NWListener?
     private var playlist: Data?
     private(set) var port: UInt16 = 0
 
-    init(keys: [Data]) {
+    init(keys: [Data], segmentsDirectory: URL? = nil) {
         self.keys = keys
+        self.segmentsDirectory = segmentsDirectory
     }
 
     func setPlaylist(_ playlist: String) {
@@ -67,15 +69,22 @@ final class LocalVideoServer: @unchecked Sendable {
             let method = parts.first.map(String.init) ?? "GET"
             let rawPath = parts.count > 1 ? String(parts[1]) : "/"
             let path = rawPath.components(separatedBy: "?").first ?? rawPath
+            var headers: [String: String] = [:]
+            for line in request.components(separatedBy: "\r\n").dropFirst() {
+                guard let colon = line.firstIndex(of: ":") else { continue }
+                let name = line[..<colon].trimmingCharacters(in: .whitespaces).lowercased()
+                let value = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+                headers[name] = value
+            }
 
-            let response = self.response(method: method, path: path)
+            let response = self.response(method: method, path: path, headers: headers)
             connection.send(content: response, completion: .contentProcessed { _ in
                 connection.cancel()
             })
         }
     }
 
-    private func response(method: String, path: String) -> Data {
+    private func response(method: String, path: String, headers: [String: String]) -> Data {
         guard method == "GET" || method == "HEAD" else {
             return httpResponse(status: "405 Method Not Allowed", contentType: "text/plain", body: Data())
         }
@@ -91,6 +100,18 @@ final class LocalVideoServer: @unchecked Sendable {
                 contentLength: playlist.count
             )
         }
+        if let segmentsDirectory, path.hasPrefix("/segment_") {
+            let name = String(path.dropFirst())
+            guard !name.contains("/"), !name.contains(".."), !name.isEmpty else {
+                return httpResponse(status: "404 Not Found", contentType: "text/plain", body: Data())
+            }
+            return segmentResponse(
+                name: name,
+                method: method,
+                headers: headers,
+                directory: segmentsDirectory
+            )
+        }
         guard components.count == 2, components[0] == "key", let index = Int(components[1]),
               keys.indices.contains(index) else {
             return httpResponse(status: "404 Not Found", contentType: "text/plain", body: Data())
@@ -104,17 +125,70 @@ final class LocalVideoServer: @unchecked Sendable {
         )
     }
 
+    private func segmentResponse(
+        name: String,
+        method: String,
+        headers: [String: String],
+        directory: URL
+    ) -> Data {
+        let fileURL = directory.appendingPathComponent(name)
+        guard let data = try? Data(contentsOf: fileURL), !data.isEmpty else {
+            return httpResponse(status: "404 Not Found", contentType: "text/plain", body: Data())
+        }
+
+        var start = 0
+        var end = data.count - 1
+        var partial = false
+        if let range = headers["range"], range.hasPrefix("bytes=") {
+            let spec = range.dropFirst("bytes=".count).split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+            if let first = spec.first, !first.isEmpty, let requestedStart = Int(first) {
+                start = max(0, requestedStart)
+            }
+            if spec.count > 1, !spec[1].isEmpty, let requestedEnd = Int(spec[1]) {
+                end = min(data.count - 1, requestedEnd)
+            }
+            guard start <= end, start < data.count else {
+                return httpResponse(
+                    status: "416 Range Not Satisfiable",
+                    contentType: "text/plain",
+                    body: Data(),
+                    extraHeaders: ["Content-Range": "bytes */\(data.count)"]
+                )
+            }
+            partial = true
+        }
+
+        let slice = data.subdata(in: start..<(end + 1))
+        var extra: [String: String] = [:]
+        if partial {
+            extra["Content-Range"] = "bytes \(start)-\(end)/\(data.count)"
+        }
+        return httpResponse(
+            status: partial ? "206 Partial Content" : "200 OK",
+            contentType: "video/mp2t",
+            body: method == "HEAD" ? Data() : slice,
+            contentLength: slice.count,
+            extraHeaders: extra,
+            acceptRanges: true
+        )
+    }
+
     private func httpResponse(
         status: String,
         contentType: String,
         body: Data,
-        contentLength: Int? = nil
+        contentLength: Int? = nil,
+        extraHeaders: [String: String] = [:],
+        acceptRanges: Bool = false
     ) -> Data {
         let length = contentLength ?? body.count
         var header = "HTTP/1.1 \(status)\r\n"
         header += "Content-Type: \(contentType)\r\n"
         header += "Content-Length: \(length)\r\n"
-        header += "Accept-Ranges: none\r\n"
+        header += "Accept-Ranges: \(acceptRanges ? "bytes" : "none")\r\n"
+        for (name, value) in extraHeaders {
+            header += "\(name): \(value)\r\n"
+        }
         header += "Cache-Control: no-store\r\n"
         header += "Connection: close\r\n\r\n"
         var data = Data(header.utf8)

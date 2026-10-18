@@ -22,6 +22,7 @@ struct SettingsView: View {
                 accountSection
                 appearanceSection
                 dataSection
+                replaySection
                 aboutSection
                 signOutButton
                 footer
@@ -167,6 +168,24 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .disabled(isClearing)
+        }
+    }
+
+    private var replaySection: some View {
+        SettingsGroup(title: "离线回放") {
+            NavigationLink {
+                ReplayDownloadsView()
+            } label: {
+                SettingsActionRow(
+                    symbol: "arrow.down.circle",
+                    title: "已下载的回放",
+                    detail: model.replayDownloads.items.isEmpty
+                        ? "暂无下载"
+                        : "\(model.replayDownloads.items.count) 个",
+                    tint: Theme.accent
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 

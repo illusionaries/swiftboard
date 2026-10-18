@@ -40,6 +40,7 @@ final class AppModel {
     // MARK: - Dependencies
 
     let client = PKUClient()
+    let replayDownloads = ReplayDownloadCenter()
     private let cacheURL: URL
     private var announcementsCache: [String: [Announcement]] = [:]
     private var contentCache: [String: [CourseContent]] = [:]
@@ -163,6 +164,7 @@ final class AppModel {
     func signOut() async {
         await client.signOut()
         client.credentials.clear()
+        replayDownloads.deleteAll()
         clearMemory()
         try? FileManager.default.removeItem(at: cacheURL)
         phase = .login

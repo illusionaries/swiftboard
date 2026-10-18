@@ -262,6 +262,8 @@ struct RouteDestination: View {
             ContentByIDView(courseID: courseID, contentID: contentID)
         case .announcement(let announcement):
             AnnouncementDetailView(announcement: announcement, course: model.course(id: announcement.courseID))
+        case .downloads:
+            ReplayDownloadsView()
         }
     }
 }

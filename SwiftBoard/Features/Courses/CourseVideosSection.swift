@@ -57,7 +57,7 @@ struct CourseVideosSection: View {
         }
         .task(id: course.id) { await load() }
         .sheet(item: $selectedVideo) { video in
-            VideoPlayerSheet(video: video)
+            VideoPlayerSheet(video: video, course: course)
                 .environment(model)
         }
     }
@@ -90,6 +90,13 @@ struct CourseVideosSection: View {
             }
 
             Spacer(minLength: 4)
+
+            if model.replayDownloads.item(for: video.id) != nil {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityLabel("已下载")
+            }
 
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))

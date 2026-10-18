@@ -19,11 +19,13 @@
 		368228A52CFA3FA061E87501 /* AssignmentHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23750D9E33FE8E686FE1C617 /* AssignmentHistoryView.swift */; };
 		3829FD3D34B8C819BD317EAD /* HTMLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6C85D79B11825C86E434DC /* HTMLView.swift */; };
 		3FEF855BFD8FF78D404D03B4 /* CoursesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4046B6EC632792F3634765 /* CoursesView.swift */; };
+		40BE69F2E5F56EA1BE7E47A2 /* ReplayDownloadCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D0E96BB13DC9D9CD29001C /* ReplayDownloadCenter.swift */; };
 		4AA23F25CDCD3BC5D4E218BD /* SwiftBoardKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0B3406D3A267CCD6829746B6 /* SwiftBoardKit */; };
 		4C71D628D15037BE53E1A708 /* GradesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0F4E467815824F156C96F0 /* GradesView.swift */; };
 		4F0AA153421A646A9BE3D9BF /* ContentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933312E68B7112BF1C6C7134 /* ContentDetailView.swift */; };
 		4F455ECA9A9860AA18670F73 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A34CDED99D88CCE22AA0995 /* Components.swift */; };
 		6F5BCF48DFDF9E35CF1EC3BF /* CourseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E7F12118553FB052BF72BF1 /* CourseDetailView.swift */; };
+		85BF6C205E78CF9ABD3846E4 /* ReplayDownloadsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F105E64361D47746A6F7B49D /* ReplayDownloadsView.swift */; };
 		8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CDB0447D34CB8FA34045219 /* MainShell.swift */; };
 		A4F15A1E1068822FB3C40107 /* CourseGradesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FACBFFE1B71E04BEE2235D0 /* CourseGradesSection.swift */; };
 		A9CFB9BBB7CC6455B2F535DE /* AssignmentSubmissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFBC12ACFB82E7A216238C3 /* AssignmentSubmissionView.swift */; };
@@ -62,8 +64,10 @@
 		B5A78DB4D175B577B172921E /* SwiftBoardKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SwiftBoardKit; path = SwiftBoardKit; sourceTree = SOURCE_ROOT; };
 		BC6C85D79B11825C86E434DC /* HTMLView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLView.swift; sourceTree = "<group>"; };
 		CDCDF624064A6F3735830CE0 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		D9D0E96BB13DC9D9CD29001C /* ReplayDownloadCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayDownloadCenter.swift; sourceTree = "<group>"; };
 		DDFBC12ACFB82E7A216238C3 /* AssignmentSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentSubmissionView.swift; sourceTree = "<group>"; };
 		E46DA85E2919A5FF5A286FD8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F105E64361D47746A6F7B49D /* ReplayDownloadsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayDownloadsView.swift; sourceTree = "<group>"; };
 		F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -185,6 +189,8 @@
 				9F4046B6EC632792F3634765 /* CoursesView.swift */,
 				2815FE7653F3C38AEB191B7B /* CourseVideosSection.swift */,
 				2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */,
+				D9D0E96BB13DC9D9CD29001C /* ReplayDownloadCenter.swift */,
+				F105E64361D47746A6F7B49D /* ReplayDownloadsView.swift */,
 				F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */,
 			);
 			path = Courses;
@@ -311,6 +317,8 @@
 				D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */,
 				C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */,
 				8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */,
+				40BE69F2E5F56EA1BE7E47A2 /* ReplayDownloadCenter.swift in Sources */,
+				85BF6C205E78CF9ABD3846E4 /* ReplayDownloadsView.swift in Sources */,
 				E25933278FF01776FB717B37 /* RootView.swift in Sources */,
 				2FE89488A283CEEBC18D8B18 /* SettingsView.swift in Sources */,
 				2D7B80239E847B3A6C9A63CF /* SwiftBoardApp.swift in Sources */,
