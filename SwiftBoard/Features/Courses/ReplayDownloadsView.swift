@@ -3,7 +3,25 @@ import SwiftBoardKit
 
 struct ReplayDownloadsView: View {
     @Environment(AppModel.self) private var model
-    @State private var selected: ReplayDownload?
+    @State private var sheet: ActiveSheet?
+
+    private enum ActiveSheet: Identifiable {
+        case play(ReplayDownload)
+        case export(ReplayDownload)
+
+        var id: String {
+            switch self {
+            case .play(let item): "play-\(item.id)"
+            case .export(let item): "export-\(item.id)"
+            }
+        }
+
+        var download: ReplayDownload {
+            switch self {
+            case .play(let item), .export(let item): item
+            }
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -25,7 +43,7 @@ struct ReplayDownloadsView: View {
                     }
                     .cardSurface(padding: 0, radius: 18)
 
-                    Text("共 \(model.replayDownloads.items.count) 个，\(totalSizeText)。仅保存在本机，退出登录会清除。")
+                    Text("共 \(model.replayDownloads.items.count) 个，\(totalSizeText)。点按播放；菜单可导出 MP4 或删除。退出登录会清除全部离线回放。")
                         .font(.caption2)
                         .foregroundStyle(Theme.muted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -42,16 +60,23 @@ struct ReplayDownloadsView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-        .sheet(item: $selected) { item in
-            VideoPlayerSheet(download: item)
-                .environment(model)
+        .sheet(item: $sheet) { active in
+            switch active {
+            case .play(let item):
+                VideoPlayerSheet(download: item)
+                    .environment(model)
+            case .export(let item):
+                ReplayExportSheet(download: item)
+                    .environment(model)
+            }
         }
         .task {
             #if DEBUG
-            if ProcessInfo.processInfo.environment["SWIFTBOARD_OFFLINE"] == "1",
-               selected == nil,
-               let first = model.replayDownloads.items.first {
-                selected = first
+            guard sheet == nil, let first = model.replayDownloads.items.first else { return }
+            if ProcessInfo.processInfo.environment["SWIFTBOARD_EXPORT"] == "1" {
+                sheet = .export(first)
+            } else if ProcessInfo.processInfo.environment["SWIFTBOARD_OFFLINE"] == "1" {
+                sheet = .play(first)
             }
             #endif
         }
@@ -60,7 +85,7 @@ struct ReplayDownloadsView: View {
     private func row(_ item: ReplayDownload) -> some View {
         HStack(spacing: 4) {
             Button {
-                selected = item
+                sheet = .play(item)
             } label: {
                 HStack(spacing: 12) {
                     IconTile(symbol: "play.fill", tint: Theme.accent, size: 40)
@@ -86,8 +111,17 @@ struct ReplayDownloadsView: View {
             .buttonStyle(.plain)
 
             Menu {
+                Button {
+                    sheet = .export(item)
+                } label: {
+                    #if os(macOS)
+                    Label("导出 MP4", systemImage: "square.and.arrow.up")
+                    #else
+                    Label("导出视频（TS）", systemImage: "square.and.arrow.up")
+                    #endif
+                }
                 Button("删除下载", role: .destructive) {
-                    if selected?.id == item.id { selected = nil }
+                    if sheet?.download.id == item.id { sheet = nil }
                     model.replayDownloads.delete(item)
                 }
             } label: {

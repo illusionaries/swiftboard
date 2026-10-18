@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02FB931B1B817F1D9BBE454B /* ReplayExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DF3E15102419E0391193434 /* ReplayExportSheet.swift */; };
 		128191D6F4A405CD8D2329C6 /* WindowSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */; };
 		17D5A34EA307D3FB946E54F2 /* VideoPlayerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */; };
 		1D5B1072FEA260E14CEDDD6B /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46DA85E2919A5FF5A286FD8 /* AppModel.swift */; };
@@ -57,6 +58,7 @@
 		72E3CF97E5BE213E23464BD5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7381D205951116E935EA574C /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		7A34CDED99D88CCE22AA0995 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		8DF3E15102419E0391193434 /* ReplayExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayExportSheet.swift; sourceTree = "<group>"; };
 		933312E68B7112BF1C6C7134 /* ContentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentDetailView.swift; sourceTree = "<group>"; };
 		9F4046B6EC632792F3634765 /* CoursesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoursesView.swift; sourceTree = "<group>"; };
 		B2BBADFD674B378970DABAF6 /* AnnouncementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementsView.swift; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 				2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */,
 				D9D0E96BB13DC9D9CD29001C /* ReplayDownloadCenter.swift */,
 				F105E64361D47746A6F7B49D /* ReplayDownloadsView.swift */,
+				8DF3E15102419E0391193434 /* ReplayExportSheet.swift */,
 				F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */,
 			);
 			path = Courses;
@@ -319,6 +322,7 @@
 				8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */,
 				40BE69F2E5F56EA1BE7E47A2 /* ReplayDownloadCenter.swift in Sources */,
 				85BF6C205E78CF9ABD3846E4 /* ReplayDownloadsView.swift in Sources */,
+				02FB931B1B817F1D9BBE454B /* ReplayExportSheet.swift in Sources */,
 				E25933278FF01776FB717B37 /* RootView.swift in Sources */,
 				2FE89488A283CEEBC18D8B18 /* SettingsView.swift in Sources */,
 				2D7B80239E847B3A6C9A63CF /* SwiftBoardApp.swift in Sources */,

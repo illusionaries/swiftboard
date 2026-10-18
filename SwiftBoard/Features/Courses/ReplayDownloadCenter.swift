@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import CommonCrypto
+import AVFoundation
 import SwiftBoardKit
 
 struct ReplayDownload: Identifiable, Codable, Hashable, Sendable {
@@ -98,6 +99,92 @@ final class ReplayDownloadCenter {
 
     func segmentsDirectory(for download: ReplayDownload) -> URL {
         directory(for: download).appendingPathComponent("segments", isDirectory: true)
+    }
+
+    func exportedFileURL(for download: ReplayDownload) -> URL {
+        #if os(macOS)
+        return directory(for: download).appendingPathComponent("export.mp4")
+        #else
+        return directory(for: download).appendingPathComponent("export.ts")
+        #endif
+    }
+
+    /// macOS exports a real MP4 via AVFoundation. iOS's AVFoundation cannot
+    /// open MPEG-TS directly, so it exports the merged TS file instead.
+    func exportVideo(_ download: ReplayDownload) async throws -> URL {
+        let finalURL = exportedFileURL(for: download)
+        if fileManager.fileExists(atPath: finalURL.path) {
+            let existingSize = (try? finalURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            if existingSize > 0 {
+                return finalURL
+            }
+        }
+
+        let temporaryTS = fileManager.temporaryDirectory
+            .appendingPathComponent("swiftboard-\(UUID().uuidString).ts")
+        try? fileManager.removeItem(at: temporaryTS)
+        do {
+            try mergeSegments(download, to: temporaryTS)
+        } catch {
+            try? fileManager.removeItem(at: temporaryTS)
+            throw error
+        }
+
+        #if os(macOS)
+        defer { try? fileManager.removeItem(at: temporaryTS) }
+        let asset = AVURLAsset(url: temporaryTS)
+        let temporaryMP4 = fileManager.temporaryDirectory
+            .appendingPathComponent("swiftboard-\(UUID().uuidString).mp4")
+        defer { try? fileManager.removeItem(at: temporaryMP4) }
+
+        var lastError: Error?
+        for preset in [AVAssetExportPresetPassthrough, AVAssetExportPresetHighestQuality] {
+            guard let session = AVAssetExportSession(asset: asset, presetName: preset) else { continue }
+            guard session.supportedFileTypes.contains(.mp4) else { continue }
+            session.shouldOptimizeForNetworkUse = true
+            do {
+                try await session.export(to: temporaryMP4, as: .mp4)
+                let size = (try? temporaryMP4.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                guard size > 0 else { throw ReplayDownloadError.exportFailed }
+                try? fileManager.removeItem(at: finalURL)
+                try fileManager.moveItem(at: temporaryMP4, to: finalURL)
+                return finalURL
+            } catch {
+                lastError = error
+                try? fileManager.removeItem(at: temporaryMP4)
+            }
+        }
+        throw lastError ?? ReplayDownloadError.exportFailed
+        #else
+        try? fileManager.removeItem(at: finalURL)
+        try fileManager.moveItem(at: temporaryTS, to: finalURL)
+        #if os(iOS)
+        try? fileManager.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+            ofItemAtPath: finalURL.path
+        )
+        #endif
+        return finalURL
+        #endif
+    }
+
+    private func mergeSegments(_ download: ReplayDownload, to url: URL) throws {
+        let directory = segmentsDirectory(for: download)
+        guard fileManager.createFile(atPath: url.path, contents: nil) else {
+            throw ReplayDownloadError.exportFailed
+        }
+        let handle = try FileHandle(forWritingTo: url)
+        defer { try? handle.close() }
+
+        for index in 0..<download.segmentCount {
+            try Task.checkCancellation()
+            let segmentURL = directory.appendingPathComponent(download.segmentFileName(index))
+            guard fileManager.fileExists(atPath: segmentURL.path) else {
+                throw ReplayDownloadError.noSegments
+            }
+            let data = try Data(contentsOf: segmentURL, options: .mappedIfSafe)
+            try handle.write(contentsOf: data)
+        }
     }
 
     // MARK: - Download
@@ -377,6 +464,7 @@ private enum ReplayDownloadError: Error, LocalizedError {
     case noSegments
     case downloadFailed
     case decryptFailed
+    case exportFailed
     case server(String)
 
     var errorDescription: String? {
@@ -385,6 +473,7 @@ private enum ReplayDownloadError: Error, LocalizedError {
         case .noSegments: "没有可下载的分片"
         case .downloadFailed: "分片下载失败"
         case .decryptFailed: "回放解密失败"
+        case .exportFailed: "MP4 导出失败"
         case .server(let message): "回放下载失败（\(message)）"
         }
     }
