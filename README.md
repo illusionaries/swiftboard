@@ -138,7 +138,6 @@ swift run --package-path SwiftBoardKit bbprobe download _123456_1 _654321_1 /tmp
 | `SWIFTBOARD_NOTIFICATION_TEST` | 启动时申请通知权限、开启截止提醒并发送一条测试通知（调试用） |
 | `SWIFTBOARD_FORCE_LOGIN` | 启动后强制回到登录页，但不清理已下载回放（调试用） |
 | `SWIFTBOARD_LOGIN_OFFLINE` | 登录页自动打开「离线回放」（调试用） |
-| `SWIFTBOARD_FULLSCREEN` | 回放加载后自动进入全屏（调试用） |
 | `SWIFTBOARD_ATTACHMENT_PREVIEW` | 打开作业详情后自动下载并预览第一个附件（调试用） |
 | `SWIFTBOARD_RESET` | 清除登录状态，展示登录页 |
 | `SWIFTBOARD_SNAPSHOT`（macOS） | 将窗口内容渲染为 PNG（无需录屏权限） |
