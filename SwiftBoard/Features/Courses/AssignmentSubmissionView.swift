@@ -1,6 +1,9 @@
 import SwiftUI
 import SwiftBoardKit
 import UniformTypeIdentifiers
+#if os(iOS)
+import VisionKit
+#endif
 
 struct AssignmentSubmissionView: View {
     let course: Course
@@ -22,6 +25,10 @@ struct AssignmentSubmissionView: View {
     @State private var receipt: AssignmentSubmissionReceipt?
     @State private var submissionError: String?
     @State private var importError: String?
+    @State private var showScanner = false
+    @State private var pendingScanURL: URL?
+    @State private var scanFileName = "扫描文稿.pdf"
+    @State private var showScanNamePrompt = false
 
     private struct SelectedUploadFile: Identifiable {
         let id = UUID()
@@ -65,6 +72,26 @@ struct AssignmentSubmissionView: View {
             allowsMultipleSelection: false,
             onCompletion: handleImport
         )
+        #if os(iOS)
+        .sheet(isPresented: $showScanNamePrompt) {
+            ScanNameSheet(
+                name: $scanFileName,
+                onSave: finalizeScannedPDF,
+                onCancel: cancelPendingScan
+            )
+        }
+        .fullScreenCover(isPresented: $showScanner) {
+            DocumentScannerView(
+                onFinish: handleScan,
+                onCancel: { showScanner = false },
+                onError: { error in
+                    showScanner = false
+                    importError = "扫描失败：\(error.localizedDescription)"
+                }
+            )
+            .ignoresSafeArea()
+        }
+        #endif
         .alert("确认提交作业？", isPresented: $showConfirmation) {
             Button("提交") {
                 submit()
@@ -190,11 +217,18 @@ struct AssignmentSubmissionView: View {
                 .padding(12)
                 .background(Theme.field, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-                Button("重新选择文件") { showFileImporter = true }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Theme.accent)
-                    .buttonStyle(.plain)
-                    .disabled(isSubmitting)
+                HStack(spacing: 18) {
+                    Button("重新选择文件") { showFileImporter = true }
+                    #if os(iOS)
+                    if VNDocumentCameraViewController.isSupported {
+                        Button("扫描文稿") { showScanner = true }
+                    }
+                    #endif
+                }
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Theme.accent)
+                .buttonStyle(.plain)
+                .disabled(isSubmitting)
             } else {
                 Button {
                     showFileImporter = true
@@ -219,6 +253,23 @@ struct AssignmentSubmissionView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isSubmitting)
+
+                #if os(iOS)
+                if VNDocumentCameraViewController.isSupported {
+                    Button {
+                        showScanner = true
+                    } label: {
+                        Label("扫描文稿", systemImage: "doc.viewfinder")
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .background(Theme.field, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.accent)
+                    .disabled(isSubmitting)
+                }
+                #endif
             }
 
             Text("只会上传你选择的这个文件。大文件提交前请确认网络稳定。")
@@ -468,12 +519,77 @@ struct AssignmentSubmissionView: View {
         }
     }
 
+    #if os(iOS)
+    private func handleScan(_ scan: VNDocumentCameraScan) {
+        showScanner = false
+        do {
+            let url = try ScannedDocumentPDF.make(from: scan)
+            pendingScanURL = url
+            scanFileName = "扫描文稿.pdf"
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(320))
+                showScanNamePrompt = true
+            }
+        } catch {
+            importError = "扫描文件生成失败：\(error.localizedDescription)"
+        }
+    }
+    #endif
+
+    private func finalizeScannedPDF() {
+        guard let pending = pendingScanURL else { return }
+        let name = normalizedScannedFileName()
+        do {
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("SwiftBoardUploads", isDirectory: true)
+                .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let destination = directory.appendingPathComponent(name)
+            try FileManager.default.copyItem(at: pending, to: destination)
+            let size = try destination.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            cleanupSelectedFile()
+            selectedFile = SelectedUploadFile(name: name, url: destination, size: Int64(size))
+            importError = nil
+        } catch {
+            importError = "保存扫描文件失败：\(error.localizedDescription)"
+        }
+        try? FileManager.default.removeItem(at: pending.deletingLastPathComponent())
+        pendingScanURL = nil
+        showScanNamePrompt = false
+    }
+
+    private func cancelPendingScan() {
+        if let pending = pendingScanURL {
+            try? FileManager.default.removeItem(at: pending.deletingLastPathComponent())
+        }
+        pendingScanURL = nil
+        showScanNamePrompt = false
+    }
+
+    private func normalizedScannedFileName() -> String {
+        var base = scanFileName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if base.lowercased().hasSuffix(".pdf") {
+            base = String(base.dropLast(4))
+        }
+        let invalid = CharacterSet(charactersIn: "/\\:?%*|\"<>")
+        base = base.components(separatedBy: invalid).joined(separator: "_")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if base.isEmpty {
+            base = "扫描文稿"
+        }
+        return String(base.prefix(110)) + ".pdf"
+    }
+
     private func cleanup() {
         guard !isSubmitting else { return }
         cleanupSelectedFile()
     }
 
     private func cleanupSelectedFile() {
+        if let pendingScanURL {
+            try? FileManager.default.removeItem(at: pendingScanURL.deletingLastPathComponent())
+            self.pendingScanURL = nil
+        }
         if let selectedFile {
             try? FileManager.default.removeItem(at: selectedFile.url.deletingLastPathComponent())
         }

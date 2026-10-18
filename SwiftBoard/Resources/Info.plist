@@ -39,6 +39,8 @@
 <array>
     <string>blog.illusion.swiftboard.replay-download</string>
 </array>
+<key>NSCameraUsageDescription</key>
+<string>拍摄并扫描纸质作业，生成 PDF 后提交。</string>
 <key>NSAppTransportSecurity</key>
 <dict>
     <key>NSAllowsLocalNetworking</key>
