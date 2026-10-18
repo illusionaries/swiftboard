@@ -1,5 +1,11 @@
 # SwiftBoard
 
+> [!IMPORTANT]
+>
+> 本仓库完全由 DeepSeek V4.1 Flash 1017 生成，未经人工审查
+> 
+> USE AT YOUR OWN RISK!
+
 北京大学教学网（course.pku.edu.cn）的非官方 SwiftUI 客户端，同一套代码运行在 **iPhone、iPad 与 Mac** 上。
 
 登录使用北大统一身份认证（IAAA），数据直接来自教学网的 Blackboard Learn 接口，不经过任何第三方服务器。
