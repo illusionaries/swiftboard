@@ -1,6 +1,25 @@
 import SwiftUI
 import SwiftBoardKit
 import UserNotifications
+#if os(macOS)
+import AppKit
+#endif
+
+#if os(macOS)
+@MainActor
+enum MacAppearance {
+    static func apply(_ mode: String) {
+        switch mode {
+        case "light":
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case "dark":
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+        default:
+            NSApp.appearance = nil
+        }
+    }
+}
+#endif
 
 @main
 struct SwiftBoardApp: App {
@@ -22,7 +41,6 @@ struct SwiftBoardApp: App {
                 .environment(model)
                 .environment(router)
                 .environment(downloads)
-                .preferredColorScheme(preferredScheme)
                 .frame(width: 580, height: 640)
         }
         #endif
@@ -35,7 +53,13 @@ struct SwiftBoardApp: App {
                 .environment(router)
                 .environment(downloads)
                 .tint(Theme.accent)
+                #if os(iOS)
                 .preferredColorScheme(preferredScheme)
+                #endif
+                #if os(macOS)
+                .onAppear { MacAppearance.apply(appearance) }
+                .onChange(of: appearance) { _, mode in MacAppearance.apply(mode) }
+                #endif
                 .task {
                     #if DEBUG
                     let environment = ProcessInfo.processInfo.environment

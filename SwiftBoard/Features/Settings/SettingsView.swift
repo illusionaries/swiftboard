@@ -57,6 +57,10 @@ struct SettingsView: View {
         .task {
             await refreshNotificationState()
         }
+        #if os(macOS)
+        .onAppear { MacAppearance.apply(appearance) }
+        .onChange(of: appearance) { _, mode in MacAppearance.apply(mode) }
+        #endif
     }
 
     // MARK: - Profile
