@@ -297,6 +297,18 @@ struct SettingsView: View {
             .buttonStyle(.plain)
             divider
             Button {
+                openURL(URL(string: "https://github.com/illusionaries/swiftboard")!)
+            } label: {
+                SettingsActionRow(
+                    symbol: "chevron.left.forwardslash.chevron.right",
+                    title: "GitHub 仓库",
+                    detail: "illusionaries/swiftboard",
+                    tint: Theme.accent
+                )
+            }
+            .buttonStyle(.plain)
+            divider
+            Button {
                 openURL(URL(string: "https://github.com/sshwy/pku3b")!)
             } label: {
                 SettingsActionRow(symbol: "heart", title: "致谢 pku3b", detail: "Blackboard 接口探索", tint: Color(hex: 0xB3263B))
@@ -361,6 +373,7 @@ struct SettingsGroup<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .cardSurface(padding: 0, radius: 16)
         }
     }
