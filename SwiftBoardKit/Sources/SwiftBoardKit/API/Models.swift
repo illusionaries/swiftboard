@@ -229,6 +229,8 @@ public struct CourseContent: Codable, Hashable, Sendable, Identifiable {
     public let dueDate: Date?
     public let possiblePoints: Double?
     public let gradeColumnID: String?
+    /// Maximum number of attempts; 0 means unlimited, nil means unknown.
+    public let attemptLimit: Int?
     public let file: ContentFile?
     public let externalURL: URL?
     public let isAvailable: Bool
@@ -246,6 +248,7 @@ public struct CourseContent: Codable, Hashable, Sendable, Identifiable {
         dueDate: Date?,
         possiblePoints: Double?,
         gradeColumnID: String? = nil,
+        attemptLimit: Int? = nil,
         file: ContentFile?,
         externalURL: URL?,
         isAvailable: Bool
@@ -262,9 +265,18 @@ public struct CourseContent: Codable, Hashable, Sendable, Identifiable {
         self.dueDate = dueDate
         self.possiblePoints = possiblePoints
         self.gradeColumnID = gradeColumnID
+        self.attemptLimit = attemptLimit
         self.file = file
         self.externalURL = externalURL
         self.isAvailable = isAvailable
+    }
+
+    public var isSingleAttempt: Bool {
+        attemptLimit == 1
+    }
+
+    public var isUnlimitedAttempts: Bool {
+        attemptLimit == 0
     }
 
     public var isContainer: Bool { kind.isContainer }

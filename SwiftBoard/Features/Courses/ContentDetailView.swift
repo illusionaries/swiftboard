@@ -41,6 +41,9 @@ struct ContentDetailView: View {
             if ProcessInfo.processInfo.environment["SWIFTBOARD_HISTORY"] == "1", activeSheet == nil {
                 activeSheet = .history
             }
+            if ProcessInfo.processInfo.environment["SWIFTBOARD_SUBMIT"] == "1", activeSheet == nil {
+                activeSheet = .submit
+            }
         }
         #endif
         .sheet(item: $activeSheet) { sheet in

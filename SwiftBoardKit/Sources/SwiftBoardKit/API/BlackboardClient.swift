@@ -271,6 +271,7 @@ public struct BlackboardClient: Sendable {
             dueDate: payload?.gradingColumn?.dueDate,
             possiblePoints: payload?.gradingColumn?.possible,
             gradeColumnID: payload?.gradingColumn?.id,
+            attemptLimit: payload?.gradingColumn?.multipleAttempts,
             file: file,
             externalURL: external,
             isAvailable: dto.isAvailable ?? true

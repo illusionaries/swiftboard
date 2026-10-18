@@ -92,6 +92,8 @@ struct GradingColumnDTO: Decodable {
     let dueDate: Date?
     let possible: Double?
     let contentId: String?
+    /// Blackboard uses 0 for unlimited attempts and 1 for a single attempt.
+    let multipleAttempts: Int?
 }
 
 struct ContentDetailPayloadDTO: Decodable {

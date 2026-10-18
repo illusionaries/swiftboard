@@ -29,6 +29,9 @@ struct AssignmentSubmissionView: View {
     @State private var pendingScanURL: URL?
     @State private var scanFileName = "扫描文稿.pdf"
     @State private var showScanNamePrompt = false
+    @State private var attempts: [AssignmentAttempt] = []
+    @State private var isCheckingAttempts = false
+    @State private var showHistory = false
 
     private struct SelectedUploadFile: Identifiable {
         let id = UUID()
@@ -45,6 +48,10 @@ struct AssignmentSubmissionView: View {
 
                     if let receipt {
                         resultCard(receipt)
+                    } else if isCheckingAttempts {
+                        checkingAttemptsCard
+                    } else if alreadySubmitted {
+                        singleAttemptSubmittedCard
                     } else {
                         formContent
                     }
@@ -66,6 +73,7 @@ struct AssignmentSubmissionView: View {
             }
         }
         .task { await loadForm() }
+        .task { await checkAttempts() }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.item],
@@ -98,7 +106,7 @@ struct AssignmentSubmissionView: View {
             }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("将把「\(selectedFile?.name ?? "")」上传到「\(course.title)」。提交后请在教学网核对提交记录。")
+            Text(submissionConfirmationMessage)
         }
         .interactiveDismissDisabled(isSubmitting)
         .onDisappear(perform: cleanup)
@@ -111,6 +119,10 @@ struct AssignmentSubmissionView: View {
 
     @ViewBuilder
     private var formContent: some View {
+        if content.isSingleAttempt {
+            singleAttemptNotice
+        }
+
         if let instructions {
             VStack(alignment: .leading, spacing: 7) {
                 Text("作业说明")
@@ -177,6 +189,111 @@ struct AssignmentSubmissionView: View {
                 }
             }
             Spacer(minLength: 0)
+        }
+    }
+
+    private var submissionConfirmationMessage: String {
+        let base = "将把「\(selectedFile?.name ?? "")」上传到「\(course.title)」。"
+        if content.isSingleAttempt {
+            return base + "该作业只允许一次提交，提交后无法修改，请确认文件无误。"
+        }
+        return base + "提交后请在教学网核对提交记录。"
+    }
+
+    private var checkingAttemptsCard: some View {
+        HStack(spacing: 10) {
+            ProgressView().controlSize(.small)
+            Text("正在检查提交次数…")
+                .font(.subheadline)
+                .foregroundStyle(Theme.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface(padding: 16, radius: 16)
+    }
+
+    private var alreadySubmitted: Bool {
+        content.isSingleAttempt && !attempts.isEmpty
+    }
+
+    private var singleAttemptNotice: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color(hex: 0xA06A24))
+                .padding(.top, 1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("该作业只允许提交一次")
+                    .font(.subheadline.weight(.semibold))
+                Text("提交后不能修改或重新提交，请确认文件、文件名和留言无误。")
+                    .font(.caption)
+                    .foregroundStyle(Theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface(padding: 14, radius: 14)
+    }
+
+    private var singleAttemptSubmittedCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                Text("该作业只允许一次提交")
+                    .font(.headline)
+            }
+
+            if let latest = attempts.last {
+                if let submittedAt = latest.submittedAt {
+                    Text("你已于 \(submittedAt.formatted(date: .abbreviated, time: .shortened)) 提交。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("你已有 \(attempts.count) 次提交记录。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text("为避免覆盖已提交内容，本 App 不会再次上传。如需修改，请联系任课老师。")
+                .font(.caption)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 12) {
+                Button("查看提交记录") {
+                    showHistory = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+
+                Button("在教学网查看") {
+                    openURL(model.client.blackboard.contentPageURL(course: course, content: content))
+                }
+                .buttonStyle(.bordered)
+            }
+            .font(.subheadline.weight(.medium))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface(padding: 18, radius: 16)
+        .sheet(isPresented: $showHistory) {
+            AssignmentHistoryView(course: course, content: content)
+                .environment(model)
+        }
+    }
+
+    private func checkAttempts() async {
+        guard content.isSingleAttempt, let columnID = content.gradeColumnID else { return }
+        isCheckingAttempts = true
+        defer { isCheckingAttempts = false }
+        do {
+            attempts = try await model.client.blackboard.assignments.history(
+                courseID: content.courseID,
+                contentID: content.id,
+                columnID: columnID
+            )
+        } catch {
+            // A failed history read should not prevent an otherwise valid submission.
         }
     }
 
