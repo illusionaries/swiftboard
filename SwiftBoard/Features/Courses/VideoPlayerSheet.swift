@@ -19,6 +19,7 @@ struct VideoPlayerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @State private var controller = VideoPlayerController()
+    @State private var isFullscreen = false
 
     init(video: CourseVideo, course: Course) {
         self.video = video
@@ -53,9 +54,25 @@ struct VideoPlayerSheet: View {
                         downloadButton(video: video, course: course)
                     }
                 }
+                #if os(macOS)
+                if controller.state == .ready {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("全屏") {
+                            NSApp.keyWindow?.toggleFullScreen(nil)
+                        }
+                    }
+                }
+                #endif
             }
         }
         .task { await load() }
+        #if os(iOS)
+        .fullScreenCover(isPresented: $isFullscreen) {
+            if let player = controller.player {
+                FullscreenVideoPlayer(player: player)
+            }
+        }
+        #endif
         .onDisappear {
             controller.stop()
         }
@@ -64,6 +81,14 @@ struct VideoPlayerSheet: View {
                 controller.pause()
             }
         }
+        #if DEBUG
+        .onChange(of: controller.state) { _, state in
+            if state == .ready,
+               ProcessInfo.processInfo.environment["SWIFTBOARD_FULLSCREEN"] == "1" {
+                isFullscreen = true
+            }
+        }
+        #endif
         #if os(macOS)
         .frame(minWidth: 900, minHeight: 640)
         #endif
@@ -103,6 +128,20 @@ struct VideoPlayerSheet: View {
                     MacVideoPlayer(player: player)
                     #else
                     VideoPlayer(player: player)
+                        .overlay(alignment: .bottomTrailing) {
+                            Button {
+                                isFullscreen = true
+                            } label: {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(8)
+                                    .background(.black.opacity(0.55), in: Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .padding(12)
+                            .accessibilityLabel("全屏播放")
+                        }
                     #endif
                 }
             }
@@ -368,6 +407,35 @@ private struct MacVideoPlayer: NSViewRepresentable {
         if nsView.player !== player {
             nsView.player = player
         }
+    }
+}
+#endif
+
+
+#if os(iOS)
+private struct FullscreenVideoPlayer: View {
+    let player: AVPlayer
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+            VideoPlayer(player: player)
+                .ignoresSafeArea()
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(10)
+                    .background(.black.opacity(0.55), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(18)
+            .accessibilityLabel("退出全屏")
+        }
+        .statusBarHidden()
     }
 }
 #endif

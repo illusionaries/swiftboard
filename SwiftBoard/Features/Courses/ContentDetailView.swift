@@ -9,6 +9,7 @@ struct ContentDetailView: View {
     @Environment(DownloadCenter.self) private var downloads
     @Environment(\.openURL) private var openURL
     @State private var activeSheet: ActiveSheet?
+    @State private var assignmentAttachments: [AssignmentAttachment]?
 
     private enum ActiveSheet: String, Identifiable {
         case submit
@@ -32,6 +33,9 @@ struct ContentDetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .task(id: content.id) {
+            await loadAssignmentAttachments()
+        }
         #if DEBUG
         .onAppear {
             if ProcessInfo.processInfo.environment["SWIFTBOARD_HISTORY"] == "1", activeSheet == nil {
@@ -46,9 +50,11 @@ struct ContentDetailView: View {
                     model.assignmentSubmitted(courseID: course.id)
                 }
                 .environment(model)
+                .environment(downloads)
             case .history:
                 AssignmentHistoryView(course: course, content: content)
                     .environment(model)
+                    .environment(downloads)
             }
         }
     }
@@ -60,6 +66,9 @@ struct ContentDetailView: View {
             VStack(spacing: 12) {
                 headerCard
                 actions
+                if let assignmentAttachments, !assignmentAttachments.isEmpty {
+                    AssignmentAttachmentsView(attachments: assignmentAttachments, course: course)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 14)
@@ -77,6 +86,9 @@ struct ContentDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 headerCard
                 actions
+                if let assignmentAttachments, !assignmentAttachments.isEmpty {
+                    AssignmentAttachmentsView(attachments: assignmentAttachments, course: course)
+                }
                 metadataCard
                 if content.file != nil {
                     hintCard
@@ -114,6 +126,21 @@ struct ContentDetailView: View {
             .frame(maxWidth: 880, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+    }
+
+    private func loadAssignmentAttachments() async {
+        guard content.kind == .assignment else { return }
+        guard let form = try? await model.client.blackboard.assignments.uploadForm(
+            courseID: content.courseID,
+            contentID: content.id
+        ) else { return }
+        assignmentAttachments = form.attachments
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["SWIFTBOARD_ATTACHMENT_PREVIEW"] == "1",
+           let first = form.attachments.first {
+            downloads.preview(first, course: course, api: model.client.blackboard)
+        }
+        #endif
     }
 
     // MARK: - Header

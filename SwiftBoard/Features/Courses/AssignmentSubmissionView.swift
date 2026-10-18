@@ -101,7 +101,7 @@ struct AssignmentSubmissionView: View {
         commentSection
 
         if let form, !form.attachments.isEmpty {
-            attachmentsSection(form.attachments)
+            AssignmentAttachmentsView(attachments: form.attachments, course: course)
         }
 
         if let importError {
@@ -262,36 +262,6 @@ struct AssignmentSubmissionView: View {
                     comment = String(value.prefix(1000))
                 }
             }
-        }
-        .cardSurface(padding: 16, radius: 16)
-    }
-
-    private func attachmentsSection(_ attachments: [AssignmentAttachment]) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            Text("作业附件")
-                .font(.subheadline.weight(.semibold))
-            ForEach(attachments) { attachment in
-                Button {
-                    openURL(attachment.url)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "paperclip")
-                            .font(.caption)
-                        Text(attachment.name)
-                            .font(.caption)
-                            .lineLimit(1)
-                        Spacer(minLength: 4)
-                        Image(systemName: "arrow.up.right")
-                            .font(.caption2)
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            Text("附件会在浏览器中打开，可能需要登录教学网。")
-                .font(.caption2)
-                .foregroundStyle(Theme.muted)
         }
         .cardSurface(padding: 16, radius: 16)
     }

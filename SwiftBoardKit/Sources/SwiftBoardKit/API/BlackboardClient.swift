@@ -407,11 +407,21 @@ public struct BlackboardClient: Sendable {
         guard let file = content.file, let url = file.url else {
             throw APIError.invalidResponse("该内容没有可下载的文件")
         }
-        let courseFolder = Self.sanitize(course.title)
-        let fileName = Self.sanitize(file.name)
+        return try await download(url: url, name: file.name, course: course, to: root, progress: progress)
+    }
+
+    /// Downloads an arbitrary attachment link (for example a teacher-provided
+    /// assignment attachment) into `root/<course>/<file name>`.
+    public func download(
+        url: URL,
+        name: String,
+        course: Course,
+        to root: URL,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
         let destination = root
-            .appendingPathComponent(courseFolder, isDirectory: true)
-            .appendingPathComponent(fileName)
+            .appendingPathComponent(Self.sanitize(course.title), isDirectory: true)
+            .appendingPathComponent(Self.sanitize(name))
         try await http.download(url, to: destination, progress: progress)
         return destination
     }

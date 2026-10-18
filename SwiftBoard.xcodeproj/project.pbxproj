@@ -36,6 +36,7 @@
 		C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5FB5FF508B1B4F6DFB9ED7 /* LoginView.swift */; };
 		D32ADA655DD651A92C4DEBEC /* DeadlineNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21509CB2462B03ACBB12EA90 /* DeadlineNotificationCenter.swift */; };
 		D4C72DB1D637238243A1CC7F /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381D205951116E935EA574C /* HomeView.swift */; };
+		D520A5B7F8DD28520B14AE67 /* AssignmentAttachmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8159E60428E0BBD870FFC3 /* AssignmentAttachmentsView.swift */; };
 		D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FED8566E83299B29CCB3653 /* LocalVideoServer.swift */; };
 		E25933278FF01776FB717B37 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0292777A37D6E7177C74A093 /* RootView.swift */; };
 		F268D415C835D3D8BF5B3EF4 /* AnnouncementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2BBADFD674B378970DABAF6 /* AnnouncementsView.swift */; };
@@ -44,6 +45,7 @@
 /* Begin PBXFileReference section */
 		0292777A37D6E7177C74A093 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		06BC39ADE6413018314D6FFE /* NotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDelegate.swift; sourceTree = "<group>"; };
+		0A8159E60428E0BBD870FFC3 /* AssignmentAttachmentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentAttachmentsView.swift; sourceTree = "<group>"; };
 		0E7F12118553FB052BF72BF1 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 		15E3ECEFBA64C05DBBF55FB6 /* WindowSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSnapshot.swift; sourceTree = "<group>"; };
 		21509CB2462B03ACBB12EA90 /* DeadlineNotificationCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineNotificationCenter.swift; sourceTree = "<group>"; };
@@ -188,6 +190,7 @@
 		D851E5D5B67D5163082AE24C /* Courses */ = {
 			isa = PBXGroup;
 			children = (
+				0A8159E60428E0BBD870FFC3 /* AssignmentAttachmentsView.swift */,
 				23750D9E33FE8E686FE1C617 /* AssignmentHistoryView.swift */,
 				DDFBC12ACFB82E7A216238C3 /* AssignmentSubmissionView.swift */,
 				933312E68B7112BF1C6C7134 /* ContentDetailView.swift */,
@@ -310,6 +313,7 @@
 				F268D415C835D3D8BF5B3EF4 /* AnnouncementsView.swift in Sources */,
 				1D5B1072FEA260E14CEDDD6B /* AppModel.swift in Sources */,
 				C331A6C35D4B52B8BC5488AD /* AppRouter.swift in Sources */,
+				D520A5B7F8DD28520B14AE67 /* AssignmentAttachmentsView.swift in Sources */,
 				368228A52CFA3FA061E87501 /* AssignmentHistoryView.swift in Sources */,
 				A9CFB9BBB7CC6455B2F535DE /* AssignmentSubmissionView.swift in Sources */,
 				4F455ECA9A9860AA18670F73 /* Components.swift in Sources */,
