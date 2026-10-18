@@ -30,6 +30,7 @@ struct AssignmentSubmissionView: View {
     @State private var scanFileName = "扫描文稿.pdf"
     @State private var showScanNamePrompt = false
     @State private var attempts: [AssignmentAttempt] = []
+    @State private var attemptsChecked = false
     @State private var isCheckingAttempts = false
     @State private var showHistory = false
 
@@ -50,8 +51,8 @@ struct AssignmentSubmissionView: View {
                         resultCard(receipt)
                     } else if isCheckingAttempts {
                         checkingAttemptsCard
-                    } else if alreadySubmitted {
-                        singleAttemptSubmittedCard
+                    } else if hasReachedAttemptLimit {
+                        attemptLimitReachedCard
                     } else {
                         formContent
                     }
@@ -119,8 +120,8 @@ struct AssignmentSubmissionView: View {
 
     @ViewBuilder
     private var formContent: some View {
-        if content.isSingleAttempt {
-            singleAttemptNotice
+        if finiteAttemptLimit != nil {
+            attemptLimitNotice
         }
 
         if let instructions {
@@ -183,6 +184,9 @@ struct AssignmentSubmissionView: View {
                     if let points = content.possiblePoints, points > 0 {
                         Chip(text: "\(formatScore(points)) 分", tint: Theme.accent)
                     }
+                    if let limit = finiteAttemptLimit {
+                        Chip(text: limit == 1 ? "仅一次提交" : "最多 \(limit) 次", tint: Theme.accent)
+                    }
                     if let form, form.existingFileCount > 0 {
                         Chip(text: "已有 \(form.existingFileCount) 个文件", tint: Theme.muted)
                     }
@@ -192,12 +196,34 @@ struct AssignmentSubmissionView: View {
         }
     }
 
+    private var finiteAttemptLimit: Int? {
+        guard let limit = content.attemptLimit, limit > 0 else { return nil }
+        return limit
+    }
+
+    private var hasReachedAttemptLimit: Bool {
+        guard attemptsChecked, let limit = finiteAttemptLimit else { return false }
+        return attempts.count >= limit
+    }
+
+    private var remainingAttempts: Int? {
+        guard let limit = finiteAttemptLimit else { return nil }
+        return max(0, limit - attempts.count)
+    }
+
     private var submissionConfirmationMessage: String {
         let base = "将把「\(selectedFile?.name ?? "")」上传到「\(course.title)」。"
-        if content.isSingleAttempt {
+        guard let limit = finiteAttemptLimit else {
+            return base + "提交后请在教学网核对提交记录。"
+        }
+        if limit == 1 {
             return base + "该作业只允许一次提交，提交后无法修改，请确认文件无误。"
         }
-        return base + "提交后请在教学网核对提交记录。"
+        if attemptsChecked {
+            let afterSubmit = max(0, limit - attempts.count - 1)
+            return base + "该作业最多可提交 \(limit) 次，你已提交 \(attempts.count) 次；本次提交后还剩 \(afterSubmit) 次。"
+        }
+        return base + "该作业最多可提交 \(limit) 次。"
     }
 
     private var checkingAttemptsCard: some View {
@@ -211,19 +237,28 @@ struct AssignmentSubmissionView: View {
         .cardSurface(padding: 16, radius: 16)
     }
 
-    private var alreadySubmitted: Bool {
-        content.isSingleAttempt && !attempts.isEmpty
-    }
+    private var attemptLimitNotice: some View {
+        let limit = finiteAttemptLimit ?? 1
+        let title = limit == 1 ? "该作业只允许提交一次" : "该作业最多可提交 \(limit) 次"
+        let detail: String
+        if !attemptsChecked {
+            detail = "请在教学网确认已提交次数，避免超过上限。"
+        } else if limit == 1 {
+            detail = "提交后不能修改或重新提交，请确认文件、文件名和留言无误。"
+        } else if attempts.isEmpty {
+            detail = "你目前还没有提交记录。"
+        } else {
+            detail = "你已提交 \(attempts.count) 次，还剩 \(remainingAttempts ?? 0) 次。"
+        }
 
-    private var singleAttemptNotice: some View {
-        HStack(alignment: .top, spacing: 10) {
+        return HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(Color(hex: 0xA06A24))
                 .padding(.top, 1)
             VStack(alignment: .leading, spacing: 3) {
-                Text("该作业只允许提交一次")
+                Text(title)
                     .font(.subheadline.weight(.semibold))
-                Text("提交后不能修改或重新提交，请确认文件、文件名和留言无误。")
+                Text(detail)
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -233,29 +268,34 @@ struct AssignmentSubmissionView: View {
         .cardSurface(padding: 14, radius: 14)
     }
 
-    private var singleAttemptSubmittedCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var attemptLimitReachedCard: some View {
+        let limit = finiteAttemptLimit ?? 1
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.title3)
                     .foregroundStyle(Theme.accent)
-                Text("该作业只允许一次提交")
+                Text(limit == 1 ? "该作业只允许一次提交" : "已达到提交次数上限")
                     .font(.headline)
             }
 
-            if let latest = attempts.last {
-                if let submittedAt = latest.submittedAt {
-                    Text("你已于 \(submittedAt.formatted(date: .abbreviated, time: .shortened)) 提交。")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("你已有 \(attempts.count) 次提交记录。")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+            if limit > 1 {
+                Text("该作业最多可提交 \(limit) 次，你已提交 \(attempts.count) 次。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else if let latest = attempts.last, let submittedAt = latest.submittedAt {
+                Text("你已于 \(submittedAt.formatted(date: .abbreviated, time: .shortened)) 提交。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else if !attempts.isEmpty {
+                Text("你已有 \(attempts.count) 次提交记录。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
-            Text("为避免覆盖已提交内容，本 App 不会再次上传。如需修改，请联系任课老师。")
+            Text(limit == 1
+                 ? "为避免覆盖已提交内容，本 App 不会再次上传。如需修改，请联系任课老师。"
+                 : "已达到本次作业的提交上限，本 App 不会再次上传。如需额外机会，请联系任课老师。")
                 .font(.caption)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -283,7 +323,7 @@ struct AssignmentSubmissionView: View {
     }
 
     private func checkAttempts() async {
-        guard content.isSingleAttempt, let columnID = content.gradeColumnID else { return }
+        guard finiteAttemptLimit != nil, let columnID = content.gradeColumnID else { return }
         isCheckingAttempts = true
         defer { isCheckingAttempts = false }
         do {
@@ -292,8 +332,10 @@ struct AssignmentSubmissionView: View {
                 contentID: content.id,
                 columnID: columnID
             )
+            attemptsChecked = true
         } catch {
             // A failed history read should not prevent an otherwise valid submission.
+            attemptsChecked = false
         }
     }
 
