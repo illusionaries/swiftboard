@@ -130,19 +130,61 @@ struct SettingsView: View {
 
     private var appearanceSection: some View {
         SettingsGroup(title: "外观") {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("外观模式")
-                    .font(.subheadline)
-                Picker("外观", selection: $appearance) {
-                    Text("跟随系统").tag("system")
-                    Text("浅色").tag("light")
-                    Text("深色").tag("dark")
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 11) {
+                    IconTile(symbol: "circle.lefthalf.filled", tint: Theme.accent, size: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("外观模式")
+                            .font(.subheadline)
+                        Text(currentAppearance.title)
+                            .font(.caption2)
+                            .foregroundStyle(Theme.muted)
+                    }
+                    Spacer(minLength: 0)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+
+                HStack(spacing: 8) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        appearanceButton(mode)
+                    }
+                }
             }
             .padding(14)
         }
+    }
+
+    private func appearanceButton(_ mode: AppearanceMode) -> some View {
+        let selected = appearance == mode.rawValue
+        return Button {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                appearance = mode.rawValue
+            }
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: mode.symbol)
+                    .font(.system(size: 16, weight: .medium))
+                Text(mode.title)
+                    .font(.caption.weight(.medium))
+            }
+            .foregroundStyle(selected ? Color.white : Color.primary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background(selected ? Theme.accent : Theme.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay {
+                if !selected {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Theme.stroke, lineWidth: 0.8)
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("外观模式：\(mode.title)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var currentAppearance: AppearanceMode {
+        AppearanceMode(rawValue: appearance) ?? .system
     }
 
     private var dataSection: some View {
@@ -361,6 +403,30 @@ struct SettingsView: View {
 
     private var divider: some View {
         Divider().padding(.leading, 14)
+    }
+}
+
+private enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: "跟随系统"
+        case .light: "浅色"
+        case .dark: "深色"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max.fill"
+        case .dark: "moon.fill"
+        }
     }
 }
 
