@@ -140,6 +140,11 @@ jobs:
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo "Release $RELEASE_TAG already exists; uploading assets with --clobber."
             gh release upload "$RELEASE_TAG" "${ASSETS[@]}" --clobber
+          elif git rev-parse "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" "${ASSETS[@]}" \
+              --verify-tag \
+              --title "SwiftBoard $RELEASE_TAG" \
+              --notes-file /tmp/swiftboard-release-notes.md
           else
             gh release create "$RELEASE_TAG" "${ASSETS[@]}" \
               --target "$GITHUB_SHA" \
