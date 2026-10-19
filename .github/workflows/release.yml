@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (for example v1.0.0)
+        required: true
+        default: v1.0.0
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: macos-latest
+    timeout-minutes: 40
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          XCODE_APP="$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -n 1)"
+          if [ -z "$XCODE_APP" ]; then
+            echo "No Xcode installation found"
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
+
+      - name: Resolve release version
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9] ]]; then
+            echo "Release tag must start with v and a version number: $RELEASE_TAG"
+            exit 1
+          fi
+          VERSION="${RELEASE_TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Releasing $RELEASE_TAG (version $VERSION)"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build universal macOS app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project SwiftBoard.xcodeproj \
+            -scheme SwiftBoard \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath .build/release-macos \
+            ARCHS='arm64 x86_64' \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            -quiet \
+            build
+
+      - name: Build unsigned iOS app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project SwiftBoard.xcodeproj \
+            -scheme SwiftBoard \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -sdk iphoneos \
+            -derivedDataPath .build/release-ios \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            -quiet \
+            build
+
+      - name: Package release assets
+        run: |
+          set -euo pipefail
+          MAC_APP=".build/release-macos/Build/Products/Release/SwiftBoard.app"
+          IOS_APP=".build/release-ios/Build/Products/Release-iphoneos/SwiftBoard.app"
+          MAC_ZIP="dist/SwiftBoard-${VERSION}-macOS.zip"
+          IPA="dist/SwiftBoard-${VERSION}-iOS-unsigned.ipa"
+
+          mkdir -p dist dist/ipa/Payload
+          ditto -c -k --sequesterRsrc --keepParent "$MAC_APP" "$MAC_ZIP"
+          cp -R "$IOS_APP" dist/ipa/Payload/
+          (cd dist/ipa && zip -qry "../$(basename "$IPA")" Payload)
+          rm -rf dist/ipa
+          shasum -a 256 "$MAC_ZIP" "$IPA" > dist/SHA256SUMS.txt
+
+          cat > /tmp/swiftboard-release-notes.md <<EOF
+          ## SwiftBoard ${RELEASE_TAG}
+
+          ### 下载
+
+          - **macOS**：\`SwiftBoard-${VERSION}-macOS.zip\`，Universal（Apple Silicon + Intel），未签名、未公证。
+          - **iOS**：\`SwiftBoard-${VERSION}-iOS-unsigned.ipa\`，未签名，不能直接安装；请使用 Sideloadly、AltStore 等工具用自己的证书重签后安装。
+
+          ### 注意
+
+          - macOS 首次打开如被 Gatekeeper 拦截，请右键选择「打开」，或执行：
+            \`\`\`bash
+            xattr -dr com.apple.quarantine /Applications/SwiftBoard.app
+            \`\`\`
+          - IPA 是 **unsigned** 构建，Release 页面不包含任何签名证书或描述文件。
+          - 本项目为非官方客户端，与北京大学、Blackboard 官方无关。
+          - 校验文件：\`SHA256SUMS.txt\`。
+          EOF
+
+          echo "Packaged:"
+          ls -lh "$MAC_ZIP" "$IPA" dist/SHA256SUMS.txt
+
+      - name: Create or update GitHub Release
+        run: |
+          set -euo pipefail
+          ASSETS=(
+            "dist/SwiftBoard-${VERSION}-macOS.zip"
+            "dist/SwiftBoard-${VERSION}-iOS-unsigned.ipa"
+            "dist/SHA256SUMS.txt"
+          )
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; uploading assets with --clobber."
+            gh release upload "$RELEASE_TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${ASSETS[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "SwiftBoard $RELEASE_TAG" \
+              --notes-file /tmp/swiftboard-release-notes.md
+          fi

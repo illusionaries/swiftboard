@@ -8,3 +8,5 @@ xcuserdata/
 .bb_password
 .swiftpm/
 *.xcuserstate
+
+dist/

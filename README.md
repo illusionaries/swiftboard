@@ -110,6 +110,27 @@ GitHub Actions 会在 push / PR 到 `main` 时：
 
 CI 不读取任何真实账号凭据，也不上传构建产物。
 
+## 发布
+
+推送 `v*` tag 会触发 [Release workflow](.github/workflows/release.yml)，构建并附加：
+
+- `SwiftBoard-<version>-macOS.zip`：Universal（Apple Silicon + Intel），未签名、未公证
+- `SwiftBoard-<version>-iOS-unsigned.ipa`：未签名 IPA，需用 Sideloadly / AltStore 等工具重签后安装
+- `SHA256SUMS.txt`
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+也可以在 Actions 页面手动运行 Release workflow 并填写 tag。Release 不包含任何签名证书、描述文件或账号凭据。
+
+macOS 首次打开未签名 App 时，需要右键「打开」，或：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/SwiftBoard.app
+```
+
 重新生成图标：
 
 ```bash
