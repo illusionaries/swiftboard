@@ -6,9 +6,9 @@ struct ReplayExportSheet: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var state: State = .working
+    @State private var state: ExportState = .working
 
-    private enum State {
+    private enum ExportState {
         case working
         case ready(URL)
         case failed(String)
