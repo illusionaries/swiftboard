@@ -47,8 +47,18 @@ jobs:
             exit 1
           fi
           VERSION="${RELEASE_TAG#v}"
+          PROJECT_VERSION="$(awk -F'"' '/^[[:space:]]*MARKETING_VERSION:/ {print $2; exit}' project.yml)"
+          if [ -z "$PROJECT_VERSION" ]; then
+            echo "Could not read MARKETING_VERSION from project.yml"
+            exit 1
+          fi
+          if [ "$PROJECT_VERSION" != "$VERSION" ]; then
+            echo "Version mismatch: tag is $VERSION but project.yml MARKETING_VERSION is $PROJECT_VERSION"
+            echo "Update project.yml, commit, and tag the same version."
+            exit 1
+          fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "Releasing $RELEASE_TAG (version $VERSION)"
+          echo "Releasing $RELEASE_TAG (version $VERSION, project version verified)"
 
       - name: Install XcodeGen
         run: brew install xcodegen

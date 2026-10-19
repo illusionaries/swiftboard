@@ -112,6 +112,8 @@ CI 不读取任何真实账号凭据，也不上传构建产物。
 
 ## 发布
 
+发布前先把 `project.yml` 里的 `MARKETING_VERSION` 改成目标版本；Release workflow 会校验 tag 与它一致，不一致会直接失败。
+
 推送 `v*` tag 会触发 [Release workflow](.github/workflows/release.yml)，构建并附加：
 
 - `SwiftBoard-<version>-macOS.zip`：Universal（Apple Silicon + Intel），未签名、未公证
@@ -119,7 +121,8 @@ CI 不读取任何真实账号凭据，也不上传构建产物。
 - `SHA256SUMS.txt`
 
 ```bash
-git tag v1.0.0
+# 先把 project.yml 的 MARKETING_VERSION 改成 1.0.0 并提交
+git -c tag.gpgSign=false tag v1.0.0
 git push origin v1.0.0
 ```
 
