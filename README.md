@@ -10,6 +10,7 @@
 
 登录使用北大统一身份认证（IAAA），数据直接来自教学网的 Blackboard Learn 接口，不经过任何第三方服务器。
 
+[![CI](https://github.com/illusionaries/swiftboard/actions/workflows/ci.yml/badge.svg)](https://github.com/illusionaries/swiftboard/actions/workflows/ci.yml)
 
 <p align="center">
   <img src="docs/login.png" width="280" alt="登录界面（演示账号）" />
@@ -99,6 +100,15 @@ xcodebuild -project SwiftBoard.xcodeproj -scheme SwiftBoard \
 ```bash
 swift test --package-path SwiftBoardKit
 ```
+
+GitHub Actions 会在 push / PR 到 `main` 时：
+
+- 运行 `SwiftBoardKit` 单元测试
+- 用 XcodeGen 生成工程
+- 构建 iOS Simulator App
+- 构建 macOS App
+
+CI 不读取任何真实账号凭据，也不上传构建产物。
 
 重新生成图标：
 
