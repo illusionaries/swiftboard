@@ -9,6 +9,7 @@ struct LoginView: View {
     @State private var otp = ""
     @State private var remember = true
     @State private var showPassword = false
+    @State private var passwordFieldFocused = false
     @State private var needsOTP = false
     @State private var needsCaptcha = false
     @State private var randCode = ""
@@ -427,32 +428,8 @@ struct LoginView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(Theme.muted)
                 .frame(width: 18)
-            Group {
-                if showPassword {
-                    TextField("密码", text: $password)
-                } else {
-                    SecureField("密码", text: $password)
-                }
-            }
-            .textFieldStyle(.plain)
-            .font(.system(size: 15))
-            .focused($focus, equals: .password)
-            .submitLabel(.go)
-            .onSubmit(submit)
-            #if os(iOS)
-            .textContentType(.password)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .keyboardType(.asciiCapable)
-            #endif
-            .onChange(of: password) { _, value in
-                // IAAA passwords are ASCII. macOS IME can otherwise commit
-                // full-width punctuation such as "！" into the field.
-                let sanitized = String(value.filter { $0.isASCII })
-                if sanitized != value {
-                    password = sanitized
-                }
-            }
+
+            passwordInput
 
             Button {
                 showPassword.toggle()
@@ -469,8 +446,51 @@ struct LoginView: View {
         .background(Theme.field, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(focus == .password ? Theme.accent.opacity(0.55) : Theme.stroke, lineWidth: focus == .password ? 1.4 : 0.8)
+                .strokeBorder(
+                    (focus == .password || passwordFieldFocused) ? Theme.accent.opacity(0.55) : Theme.stroke,
+                    lineWidth: (focus == .password || passwordFieldFocused) ? 1.4 : 0.8
+                )
         }
+        .onChange(of: password) { _, value in
+            // IAAA passwords are ASCII; guard against IME/paste input.
+            let sanitized = String(value.filter { $0.isASCII })
+            if sanitized != value {
+                password = sanitized
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var passwordInput: some View {
+        #if os(macOS)
+        MacPasswordField(
+            text: $password,
+            isSecure: !showPassword,
+            placeholder: "密码",
+            onSubmit: submit,
+            onFocusChange: { passwordFieldFocused = $0 }
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 22)
+        .id(showPassword)
+        #else
+        Group {
+            if showPassword {
+                TextField("密码", text: $password)
+            } else {
+                SecureField("密码", text: $password)
+            }
+        }
+        .textFieldStyle(.plain)
+        .font(.system(size: 15))
+        .focused($focus, equals: .password)
+        .submitLabel(.go)
+        .onSubmit(submit)
+        .textContentType(.password)
+        .textInputAutocapitalization(.never)
+        .autocorrectionDisabled()
+        .keyboardType(.asciiCapable)
+        #endif
     }
 
     private func inputField(

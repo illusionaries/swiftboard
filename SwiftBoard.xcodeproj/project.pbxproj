@@ -18,6 +18,7 @@
 		2F40597BED038F7D8D34724A /* ContentRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E93AA1B50ABD1EFFF67DAB /* ContentRow.swift */; };
 		2FE89488A283CEEBC18D8B18 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72E3CF97E5BE213E23464BD5 /* SettingsView.swift */; };
 		338EAF9478B6F4BD0F35D6CB /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B2354893FFC8B8DDBE5D8B /* Theme.swift */; };
+		351F47E7C1CC925ED0A9CD44 /* MacPasswordField.swift in Sources */ = {isa = PBXBuildFile; fileRef = E773FD8856793F9395D3BD9C /* MacPasswordField.swift */; };
 		368228A52CFA3FA061E87501 /* AssignmentHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23750D9E33FE8E686FE1C617 /* AssignmentHistoryView.swift */; };
 		3829FD3D34B8C819BD317EAD /* HTMLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC6C85D79B11825C86E434DC /* HTMLView.swift */; };
 		3FEF855BFD8FF78D404D03B4 /* CoursesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4046B6EC632792F3634765 /* CoursesView.swift */; };
@@ -77,6 +78,7 @@
 		D9D0E96BB13DC9D9CD29001C /* ReplayDownloadCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayDownloadCenter.swift; sourceTree = "<group>"; };
 		DDFBC12ACFB82E7A216238C3 /* AssignmentSubmissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssignmentSubmissionView.swift; sourceTree = "<group>"; };
 		E46DA85E2919A5FF5A286FD8 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		E773FD8856793F9395D3BD9C /* MacPasswordField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPasswordField.swift; sourceTree = "<group>"; };
 		F105E64361D47746A6F7B49D /* ReplayDownloadsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayDownloadsView.swift; sourceTree = "<group>"; };
 		F5EF33108283D1F9B89E25B4 /* VideoPlayerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -234,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				5F5FB5FF508B1B4F6DFB9ED7 /* LoginView.swift */,
+				E773FD8856793F9395D3BD9C /* MacPasswordField.swift */,
 			);
 			path = Login;
 			sourceTree = "<group>";
@@ -334,6 +337,7 @@
 				D4C72DB1D637238243A1CC7F /* HomeView.swift in Sources */,
 				D74472E34EE8A01E16CCEE93 /* LocalVideoServer.swift in Sources */,
 				C97F3407B85F5BC7B925C0B7 /* LoginView.swift in Sources */,
+				351F47E7C1CC925ED0A9CD44 /* MacPasswordField.swift in Sources */,
 				8D8CBC68167C2B119F18F779 /* MainShell.swift in Sources */,
 				20BDF96471DBE478D273122E /* NotificationDelegate.swift in Sources */,
 				40BE69F2E5F56EA1BE7E47A2 /* ReplayDownloadCenter.swift in Sources */,
