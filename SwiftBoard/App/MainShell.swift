@@ -124,7 +124,10 @@ struct SidebarView: View {
                     .foregroundStyle(.primary)
                 Spacer(minLength: 4)
                 if section == .announcements, !model.announcements.isEmpty {
-                    CountBadge(count: model.announcements.count)
+                    Text("\(model.announcements.count)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
                 if section == .grades, !model.currentCourses.isEmpty {
                     Text("\(model.currentCourses.count)")
