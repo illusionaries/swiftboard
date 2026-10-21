@@ -12,6 +12,8 @@
 
 [![CI](https://github.com/illusionaries/swiftboard/actions/workflows/ci.yml/badge.svg)](https://github.com/illusionaries/swiftboard/actions/workflows/ci.yml)
 
+版本变更见 [CHANGELOG.md](CHANGELOG.md)。
+
 <p align="center">
   <img src="docs/login.png" width="280" alt="登录界面（演示账号）" />
 </p>

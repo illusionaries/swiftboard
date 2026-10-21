@@ -133,6 +133,7 @@ jobs:
           - IPA 是 **unsigned** 构建，Release 页面不包含任何签名证书或描述文件。
           - 本项目为非官方客户端，与北京大学、Blackboard 官方无关。
           - 校验文件：\`SHA256SUMS.txt\`。
+          - 完整变更：[CHANGELOG.md](https://github.com/illusionaries/swiftboard/blob/main/CHANGELOG.md)。
           EOF
 
           echo "Packaged:"
