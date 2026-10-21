@@ -38,6 +38,8 @@ struct AssignmentSubmissionView: View {
     @State private var isCheckingAttempts = false
     @State private var showHistory = false
     @State private var previewURL: URL?
+    @State private var showRenameSheet = false
+    @State private var renameDraft = ""
 
     private struct SelectedUploadFile: Identifiable {
         let id = UUID()
@@ -374,6 +376,16 @@ struct AssignmentSubmissionView: View {
                     }
                     Spacer()
                     Button {
+                        renameDraft = selectedFile.name
+                        showRenameSheet = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("重命名文件")
+                    Button {
                         previewURL = selectedFile.url
                     } label: {
                         Image(systemName: "eye")
@@ -456,6 +468,9 @@ struct AssignmentSubmissionView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .cardSurface(padding: 16, radius: 16)
+        .sheet(isPresented: $showRenameSheet) {
+            RenameUploadFileSheet(name: $renameDraft, onSave: applySelectedFileRename)
+        }
     }
 
     private var commentSection: some View {
@@ -758,6 +773,25 @@ struct AssignmentSubmissionView: View {
         return String(base.prefix(110)) + ".pdf"
     }
 
+    private func applySelectedFileRename() {
+        guard let current = selectedFile else { return }
+        var name = renameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let invalid = CharacterSet(charactersIn: "/\\:?%*|\"<>")
+        name = name.components(separatedBy: invalid).joined(separator: "_")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        let originalExtension = (current.name as NSString).pathExtension
+        if (name as NSString).pathExtension.isEmpty, !originalExtension.isEmpty {
+            name += ".\(originalExtension)"
+        }
+        selectedFile = SelectedUploadFile(
+            name: String(name.prefix(180)),
+            url: current.url,
+            size: current.size
+        )
+    }
+
     private func cleanup() {
         guard !isSubmitting else { return }
         cleanupSelectedFile()
@@ -772,5 +806,69 @@ struct AssignmentSubmissionView: View {
             try? FileManager.default.removeItem(at: selectedFile.url.deletingLastPathComponent())
         }
         selectedFile = nil
+    }
+}
+
+
+private struct RenameUploadFileSheet: View {
+    @Binding var name: String
+    let onSave: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("修改上传到教学网的文件名")
+                    .font(.headline)
+                Text("扩展名会自动保留；如果去掉扩展名，会沿用原文件的扩展名。")
+                    .font(.caption)
+                    .foregroundStyle(Theme.muted)
+
+                TextField("文件名", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($focused)
+                    .autocorrectionDisabled()
+                    .onSubmit {
+                        if !trimmedName.isEmpty { save() }
+                    }
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+            .navigationTitle("重命名文件")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") { save() }
+                        .disabled(trimmedName.isEmpty)
+                }
+            }
+            .task {
+                try? await Task.sleep(for: .milliseconds(250))
+                focused = true
+            }
+        }
+        #if os(iOS)
+        .presentationDetents([.height(260)])
+        #else
+        .frame(minWidth: 420, minHeight: 220)
+        #endif
+    }
+
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func save() {
+        guard !trimmedName.isEmpty else { return }
+        onSave()
+        dismiss()
     }
 }
