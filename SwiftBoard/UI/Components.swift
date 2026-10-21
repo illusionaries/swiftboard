@@ -58,21 +58,6 @@ struct Chip: View {
     }
 }
 
-struct CountBadge: View {
-    let count: Int
-    var tint: Color = Theme.accent
-
-    var body: some View {
-        Text("\(count)")
-            .font(.caption2.weight(.semibold))
-            .monospacedDigit()
-            .foregroundStyle(tint)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .background(tint.opacity(0.12), in: Capsule())
-    }
-}
-
 // MARK: - Icons & avatars
 
 struct IconTile: View {
