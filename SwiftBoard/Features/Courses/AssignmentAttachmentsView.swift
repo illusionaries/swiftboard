@@ -4,6 +4,7 @@ import SwiftBoardKit
 struct AssignmentAttachmentsView: View {
     let attachments: [AssignmentAttachment]
     let course: Course
+    var title = "作业附件"
 
     @Environment(AppModel.self) private var model
     @Environment(DownloadCenter.self) private var downloads
@@ -11,7 +12,7 @@ struct AssignmentAttachmentsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Label("作业附件", systemImage: "paperclip")
+                Label(title, systemImage: "paperclip")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text("\(attachments.count) 个")

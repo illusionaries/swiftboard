@@ -250,6 +250,66 @@ public struct BlackboardClient: Sendable {
             }
     }
 
+    /// Reads the Original Experience folder page HTML to discover files
+    /// attached to document content items.
+    ///
+    /// Blackboard's REST content JSON exposes at most one `file` per item, while
+    /// documents can have several attached courseware files. The folder page
+    /// includes every attachment link with a `pid-<contentID>` prefix, so we
+    /// map those back to the REST content IDs.
+    public func contentAttachments(courseID: String, folderID: String) async throws -> [String: [ContentFile]] {
+        let url = makeURL(
+            "/webapps/blackboard/content/listContent.jsp",
+            query: [
+                URLQueryItem(name: "course_id", value: courseID),
+                URLQueryItem(name: "content_id", value: folderID)
+            ]
+        )
+        var request = HTTPRequest(url: url)
+        request.headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        let response = try await http.send(request)
+
+        guard let html = String(data: response.data, encoding: .utf8) else {
+            throw APIError.decoding("无法读取教学内容页面")
+        }
+        if response.url.path.contains("/webapps/login")
+            || html.contains("loginForm")
+            || html.contains("统一身份认证") {
+            throw APIError.notAuthenticated
+        }
+        guard response.isSuccess else {
+            throw APIError.http(status: response.status, message: nil)
+        }
+
+        var result: [String: [ContentFile]] = [:]
+        var seen = Set<String>()
+        for match in html.allRegexMatches(
+            #"<a\b[^>]*href\s*=\s*["']([^"']*bbcswebdav[^"']*)["'][^>]*>(.*?)</a>"#
+        ) {
+            guard match.count >= 3 else { continue }
+            let href = match[1].decodingHTMLEntities()
+            guard let pidMatch = href.firstRegexMatch(#"pid-(\d+)-"#),
+                  pidMatch.count > 1,
+                  let fileURL = URL(string: href, relativeTo: Self.baseURL)?.absoluteURL else {
+                continue
+            }
+            let contentID = "_\(pidMatch[1])_1"
+            let key = contentID + "|" + fileURL.absoluteString
+            guard seen.insert(key).inserted else { continue }
+
+            var name = match[2].htmlToPlainText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if name.isEmpty {
+                name = fileURL.lastPathComponent
+            }
+            let file = ContentFile(name: name.isEmpty ? "附件" : name, mimeType: nil, url: fileURL)
+            result[contentID, default: []].append(file)
+        }
+
+        return result.mapValues { files in
+            files.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        }
+    }
+
     private static func content(from dto: ContentDTO, courseID: String) -> CourseContent {
         let handler = dto.contentHandler ?? "unknown"
         let payload = dto.contentDetail?[handler] ?? dto.contentDetail?.values.first

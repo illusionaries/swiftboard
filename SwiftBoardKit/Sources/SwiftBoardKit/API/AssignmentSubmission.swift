@@ -634,7 +634,7 @@ private struct MultipartBuilder {
 
 // MARK: - Regex helpers
 
-private extension String {
+extension String {
     func firstRegexMatch(_ pattern: String) -> [String]? {
         guard let regex = try? NSRegularExpression(
             pattern: pattern,

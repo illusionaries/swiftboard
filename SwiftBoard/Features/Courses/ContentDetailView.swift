@@ -10,6 +10,7 @@ struct ContentDetailView: View {
     @Environment(\.openURL) private var openURL
     @State private var activeSheet: ActiveSheet?
     @State private var assignmentAttachments: [AssignmentAttachment]?
+    @State private var contentFiles: [ContentFile] = []
 
     private enum ActiveSheet: String, Identifiable {
         case submit
@@ -35,6 +36,9 @@ struct ContentDetailView: View {
         #endif
         .task(id: content.id) {
             await loadAssignmentAttachments()
+        }
+        .task(id: content.id) {
+            await loadContentFiles()
         }
         #if DEBUG
         .onAppear {
@@ -72,6 +76,7 @@ struct ContentDetailView: View {
                 if let assignmentAttachments, !assignmentAttachments.isEmpty {
                     AssignmentAttachmentsView(attachments: assignmentAttachments, course: course)
                 }
+                contentFilesSection
             }
             .padding(.horizontal, 20)
             .padding(.top, 14)
@@ -92,6 +97,7 @@ struct ContentDetailView: View {
                 if let assignmentAttachments, !assignmentAttachments.isEmpty {
                     AssignmentAttachmentsView(attachments: assignmentAttachments, course: course)
                 }
+                contentFilesSection
                 metadataCard
                 if content.file != nil {
                     hintCard
@@ -129,6 +135,34 @@ struct ContentDetailView: View {
             .frame(maxWidth: 880, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
+    }
+
+    private var contentFileAttachments: [AssignmentAttachment] {
+        contentFiles.compactMap { file in
+            guard let url = file.url else { return nil }
+            return AssignmentAttachment(name: file.name, url: url)
+        }
+    }
+
+    @ViewBuilder
+    private var contentFilesSection: some View {
+        if !contentFileAttachments.isEmpty {
+            AssignmentAttachmentsView(
+                attachments: contentFileAttachments,
+                course: course,
+                title: "课件 / 附件"
+            )
+        }
+    }
+
+    private func loadContentFiles() async {
+        guard content.kind == .document, let folderID = content.parentID else { return }
+        contentFiles = []
+        guard let attachments = try? await model.client.blackboard.contentAttachments(
+            courseID: content.courseID,
+            folderID: folderID
+        ) else { return }
+        contentFiles = attachments[content.id] ?? []
     }
 
     private func loadAssignmentAttachments() async {
