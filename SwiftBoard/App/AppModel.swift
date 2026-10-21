@@ -46,6 +46,8 @@ final class AppModel {
     private var announcementsCache: [String: [Announcement]] = [:]
     private var contentCache: [String: [CourseContent]] = [:]
     private var didBootstrap = false
+    private var isRecoveringSession = false
+    private var attemptedSessionRecovery = false
 
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -160,6 +162,7 @@ final class AppModel {
             client.credentials.clear()
         }
         UserDefaults.standard.set(trimmed, forKey: "lastUsername")
+        attemptedSessionRecovery = false
         await refreshAll()
     }
 
@@ -172,9 +175,59 @@ final class AppModel {
         try? FileManager.default.removeItem(at: cacheURL)
         phase = .login
         sessionMessage = nil
+        isRecoveringSession = false
+        attemptedSessionRecovery = false
     }
 
-    func expireSession() {
+    /// Called when an authenticated request fails. If "记住我" credentials are
+    /// available, try a silent sign-in once before falling back to the login
+    /// screen. Pass `autoRecover: false` for forced logout/debug flows.
+    func expireSession(autoRecover: Bool = true) {
+        guard !isRecoveringSession else { return }
+
+        guard autoRecover,
+              !attemptedSessionRecovery,
+              let credentials = client.credentials.load() else {
+            showLoginExpired()
+            return
+        }
+
+        isRecoveringSession = true
+        debugLog("session expired; trying saved credentials")
+        Task { await recoverSession(using: credentials) }
+    }
+
+    private func recoverSession(using credentials: (username: String, password: String)) async {
+        defer { isRecoveringSession = false }
+        do {
+            let profile = try await client.signIn(
+                username: credentials.username,
+                password: credentials.password
+            )
+            self.profile = maskedProfile(profile)
+            self.phase = .ready
+            self.sessionMessage = nil
+            self.loadError = nil
+            UserDefaults.standard.set(credentials.username, forKey: "lastUsername")
+
+            // Allow one recovery per expiry. If this refresh immediately
+            // expires again, present() will fall through to the login screen
+            // instead of looping.
+            isRecoveringSession = false
+            attemptedSessionRecovery = true
+            await refreshAll()
+            if phase == .ready {
+                attemptedSessionRecovery = false
+                debugLog("session recovered with saved credentials")
+            }
+        } catch {
+            isRecoveringSession = false
+            attemptedSessionRecovery = true
+            showLoginExpired()
+        }
+    }
+
+    private func showLoginExpired() {
         profile = nil
         phase = .login
         sessionMessage = "登录状态已过期，请重新登录"

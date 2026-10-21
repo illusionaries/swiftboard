@@ -72,7 +72,7 @@ struct SwiftBoardApp: App {
                         await model.deadlineNotifications.sendTestNotification()
                     }
                     if environment["SWIFTBOARD_FORCE_LOGIN"] == "1" {
-                        model.expireSession()
+                        model.expireSession(autoRecover: false)
                     }
                     if let route = environment["SWIFTBOARD_ROUTE"] {
                         let parts = route.split(separator: ":").map(String.init)
