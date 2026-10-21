@@ -441,7 +441,18 @@ struct LoginView: View {
             .onSubmit(submit)
             #if os(iOS)
             .textContentType(.password)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .keyboardType(.asciiCapable)
             #endif
+            .onChange(of: password) { _, value in
+                // IAAA passwords are ASCII. macOS IME can otherwise commit
+                // full-width punctuation such as "！" into the field.
+                let sanitized = String(value.filter { $0.isASCII })
+                if sanitized != value {
+                    password = sanitized
+                }
+            }
 
             Button {
                 showPassword.toggle()
